@@ -248,6 +248,20 @@
             </div>
         </div>
     </form>
+    /* Dropdown Styling */
+    select.form-input option {
+        background-color: var(--bg-card);
+        color: var(--text-primary);
+        padding: 8px;
+    }
+
+    /* Dark mode specific override if needed */
+    @media (prefers-color-scheme: dark) {
+        select.form-input option {
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+    }
 @endsection
 
 @push('styles')
