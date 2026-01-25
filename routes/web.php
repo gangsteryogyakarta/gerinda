@@ -27,6 +27,9 @@ Route::get('/logout', [App\Http\Controllers\AuthController::class, 'logout']); /
 Route::middleware(['auth'])->group(function () {
     
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // User Management
+    Route::resource('users', App\Http\Controllers\UserController::class);
     
     // Profile
     Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'index'])->name('profile.index');
