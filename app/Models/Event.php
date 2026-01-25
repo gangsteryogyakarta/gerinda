@@ -37,7 +37,6 @@ class Event extends Model
         'enable_waitlist',
         'require_ticket',
         'enable_checkin',
-        'enable_lottery',
         'send_wa_notification',
         'status',
         'created_by',
@@ -51,7 +50,6 @@ class Event extends Model
         'enable_waitlist' => 'boolean',
         'require_ticket' => 'boolean',
         'enable_checkin' => 'boolean',
-        'enable_lottery' => 'boolean',
         'send_wa_notification' => 'boolean',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
@@ -115,15 +113,7 @@ class Event extends Model
         return $this->hasMany(EventRegistration::class);
     }
 
-    public function lotteryPrizes(): HasMany
-    {
-        return $this->hasMany(LotteryPrize::class);
-    }
 
-    public function lotteryDraws(): HasMany
-    {
-        return $this->hasMany(LotteryDraw::class);
-    }
 
     public function checkinLogs(): HasMany
     {

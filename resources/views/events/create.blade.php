@@ -215,13 +215,7 @@
                             </label>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-checkbox">
-                                <input type="checkbox" name="enable_lottery" value="1" {{ old('enable_lottery') ? 'checked' : '' }}>
-                                <span class="checkmark"></span>
-                                Aktifkan Undian Hadiah
-                            </label>
-                        </div>
+
 
                         <div class="form-group">
                             <label class="form-checkbox">

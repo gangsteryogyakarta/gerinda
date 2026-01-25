@@ -4,7 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\CheckinController;
 use App\Http\Controllers\HealthController;
-use App\Http\Controllers\LotteryController;
+
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -46,14 +46,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/checkin/{registration}/manual', [CheckinController::class, 'manualCheckin'])->name('registrations.checkin');
     Route::get('/checkin/{event}/stats', [CheckinController::class, 'liveStats'])->name('checkin.stats');
 
-    // Lottery
-    Route::get('/lottery', [LotteryController::class, 'index'])->name('lottery.index');
-    Route::get('/lottery/{event}', [LotteryController::class, 'event'])->name('lottery.event');
-    Route::get('/lottery/{event}/shuffle', [LotteryController::class, 'shuffleNames'])->name('lottery.shuffle');
-    Route::post('/lottery/{event}/draw', [LotteryController::class, 'draw'])->name('lottery.draw');
-    Route::get('/lottery/{event}/prizes', [LotteryController::class, 'prizes'])->name('lottery.prizes');
-    Route::post('/lottery/{event}/prizes', [LotteryController::class, 'storePrize'])->name('lottery.store-prize');
-    Route::delete('/lottery/prizes/{prize}', [LotteryController::class, 'deletePrize'])->name('lottery.delete-prize');
+
 
     // Registrations Download
     Route::get('/registrations/{registration}/download', function(\App\Models\EventRegistration $registration) {

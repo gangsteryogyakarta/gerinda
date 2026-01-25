@@ -958,10 +958,7 @@
                         <i data-lucide="scan"></i>
                         <span>Check-in</span>
                     </a>
-                    <a href="{{ route('lottery.index') }}" class="nav-item {{ request()->routeIs('lottery.*') ? 'active' : '' }}">
-                        <i data-lucide="gift"></i>
-                        <span>Undian Hadiah</span>
-                    </a>
+
                     <a href="{{ route('tickets.index') }}" class="nav-item {{ request()->routeIs('tickets.*') ? 'active' : '' }}">
                         <i data-lucide="ticket"></i>
                         <span>Tiket</span>
