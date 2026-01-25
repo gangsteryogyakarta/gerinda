@@ -1,89 +1,98 @@
 @extends('layouts.app')
 
+@section('title', 'Edit User')
+
 @section('content')
-<div class="max-w-2xl mx-auto">
-    <div class="header mb-5">
-        <div class="flex items-center gap-3">
-            <a href="{{ route('users.index') }}" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">
-                <i data-lucide="arrow-left" class="w-5 h-5"></i>
-            </a>
-            <h1 class="text-3xl font-bold text-slate-800">Edit User</h1>
+<div class="page-header">
+    <div class="page-header-left">
+        <a href="{{ route('users.index') }}" class="btn btn-secondary btn-sm">
+            <i data-lucide="arrow-left"></i>
+            Kembali
+        </a>
+        <div>
+            <h1>Edit User</h1>
+            <p>Perbarui informasi akun pengguna dan hak akses.</p>
         </div>
     </div>
+</div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <form action="{{ route('users.update', $user) }}" method="POST" class="p-6">
+<div class="card">
+    <div class="card-body">
+        <form action="{{ route('users.update', $user) }}" method="POST">
             @csrf
             @method('PUT')
             
-            <div class="space-y-6">
+            <div style="display: grid; grid-template-columns: 1fr; gap: 24px; max-width: 800px;">
                 <!-- Name -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Nama Lengkap</label>
+                <div class="form-group">
+                    <label class="form-label">Nama Lengkap <span style="color:red">*</span></label>
                     <input type="text" name="name" value="{{ old('name', $user->name) }}" required
-                           class="w-full px-4 py-2.5 rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500">
+                           class="form-input" placeholder="Masukkan nama lengkap">
                     @error('name')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="form-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <!-- Email -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
+                <div class="form-group">
+                    <label class="form-label">Email Address <span style="color:red">*</span></label>
                     <input type="email" name="email" value="{{ old('email', $user->email) }}" required
-                           class="w-full px-4 py-2.5 rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500">
+                           class="form-input" placeholder="contoh@gerindradiy.com">
                     @error('email')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="form-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <!-- Password -->
-                <div class="p-4 bg-yellow-50 rounded-xl border border-yellow-200">
-                    <div class="flex items-start gap-3">
-                        <i data-lucide="info" class="w-5 h-5 text-yellow-600 mt-0.5"></i>
-                        <p class="text-sm text-yellow-700">Kosongkan jika tidak ingin mengubah password.</p>
+                <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); padding: 12px 16px; border-radius: 8px;">
+                    <div style="display: flex; gap: 10px; align-items: flex-start;">
+                        <i data-lucide="info" style="color: #F59E0B; width: 18px; height: 18px; margin-top: 2px;"></i>
+                        <p style="font-size: 13px; color: #FCD34D; margin: 0;">Isi kolom password hanya jika ingin menggantinya. Biarkan kosong jika tidak.</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Password Baru</label>
-                        <input type="password" name="password" 
-                               class="w-full px-4 py-2.5 rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label class="form-label">Password Baru</label>
+                        <input type="password" name="password"
+                               class="form-input" placeholder="••••••••">
                         @error('password')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="form-error">{{ $message }}</p>
                         @enderror
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Konfirmasi Password</label>
-                        <input type="password" name="password_confirmation" 
-                               class="w-full px-4 py-2.5 rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500">
+                    <div class="form-group">
+                        <label class="form-label">Konfirmasi Password</label>
+                        <input type="password" name="password_confirmation"
+                               class="form-input" placeholder="••••••••">
                     </div>
                 </div>
 
                 <!-- Roles -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-3">Role Akses</label>
-                    <div class="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                        @foreach($roles as $role)
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" name="roles[]" value="{{ $role->name }}" 
-                                   @if($user->hasRole($role->name)) checked @endif
-                                   class="w-5 h-5 rounded border-slate-300 text-red-600 focus:ring-red-500">
-                            <span class="text-sm font-medium text-slate-700">{{ $role->name }}</span>
-                        </label>
-                        @endforeach
+                <div class="form-group">
+                    <label class="form-label">Role Akses <span style="color:red">*</span></label>
+                    <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            @foreach($roles as $role)
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" name="roles[]" value="{{ $role->name }}" 
+                                       @if($user->hasRole($role->name)) checked @endif
+                                       style="width: 16px; height: 16px; accent-color: var(--primary);">
+                                <span style="font-size: 14px; color: white;">{{ $role->name }}</span>
+                            </label>
+                            @endforeach
+                        </div>
                     </div>
                     @error('roles')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="form-error">{{ $message }}</p>
                     @enderror
                 </div>
 
-                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                    <a href="{{ route('users.index') }}" class="px-5 py-2.5 text-slate-600 font-medium hover:bg-slate-50 rounded-xl transition-colors">
+                <div style="padding-top: 20px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 12px;">
+                    <a href="{{ route('users.index') }}" class="btn btn-secondary">
                         Batal
                     </a>
-                    <button type="submit" class="px-5 py-2.5 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20">
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="save"></i>
                         Simpan Perubahan
                     </button>
                 </div>
@@ -91,4 +100,14 @@
         </form>
     </div>
 </div>
+
+@push('styles')
+<style>
+    @media (max-width: 768px) {
+        div[style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+@endpush
 @endsection

@@ -1,80 +1,90 @@
 @extends('layouts.app')
 
+@section('title', 'Tambah User')
+
 @section('content')
-<div class="max-w-2xl mx-auto">
-    <div class="header mb-5">
-        <div class="flex items-center gap-3">
-            <a href="{{ route('users.index') }}" class="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors">
-                <i data-lucide="arrow-left" class="w-5 h-5"></i>
-            </a>
-            <h1 class="text-3xl font-bold text-slate-800">Tambah User Baru</h1>
+<div class="page-header">
+    <div class="page-header-left">
+        <a href="{{ route('users.index') }}" class="btn btn-secondary btn-sm">
+            <i data-lucide="arrow-left"></i>
+            Kembali
+        </a>
+        <div>
+            <h1>Tambah User Baru</h1>
+            <p>Buat akun pengguna baru dengan hak akses tertentu.</p>
         </div>
     </div>
+</div>
 
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-        <form action="{{ route('users.store') }}" method="POST" class="p-6">
+<div class="card">
+    <div class="card-body">
+        <form action="{{ route('users.store') }}" method="POST">
             @csrf
             
-            <div class="space-y-6">
+            <div style="display: grid; grid-template-columns: 1fr; gap: 24px; max-width: 800px;">
                 <!-- Name -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Nama Lengkap</label>
+                <div class="form-group">
+                    <label class="form-label">Nama Lengkap <span style="color:red">*</span></label>
                     <input type="text" name="name" value="{{ old('name') }}" required
-                           class="w-full px-4 py-2.5 rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500">
+                           class="form-input" placeholder="Masukkan nama lengkap">
                     @error('name')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="form-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <!-- Email -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Email Address</label>
+                <div class="form-group">
+                    <label class="form-label">Email Address <span style="color:red">*</span></label>
                     <input type="email" name="email" value="{{ old('email') }}" required
-                           class="w-full px-4 py-2.5 rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500">
+                           class="form-input" placeholder="contoh@gerindradiy.com">
                     @error('email')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="form-error">{{ $message }}</p>
                     @enderror
                 </div>
 
                 <!-- Password -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Password</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label class="form-label">Password <span style="color:red">*</span></label>
                         <input type="password" name="password" required
-                               class="w-full px-4 py-2.5 rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500">
+                               class="form-input" placeholder="••••••••">
                         @error('password')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            <p class="form-error">{{ $message }}</p>
                         @enderror
                     </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-2">Konfirmasi Password</label>
+                    <div class="form-group">
+                        <label class="form-label">Konfirmasi Password <span style="color:red">*</span></label>
                         <input type="password" name="password_confirmation" required
-                               class="w-full px-4 py-2.5 rounded-xl border-slate-200 focus:border-red-500 focus:ring-red-500">
+                               class="form-input" placeholder="••••••••">
                     </div>
                 </div>
 
                 <!-- Roles -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-3">Role Akses</label>
-                    <div class="space-y-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                        @foreach($roles as $role)
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            <input type="checkbox" name="roles[]" value="{{ $role->name }}" 
-                                   class="w-5 h-5 rounded border-slate-300 text-red-600 focus:ring-red-500">
-                            <span class="text-sm font-medium text-slate-700">{{ $role->name }}</span>
-                        </label>
-                        @endforeach
+                <div class="form-group">
+                    <label class="form-label">Role Akses <span style="color:red">*</span></label>
+                    <div style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+                        <p style="font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 12px;">Pilih satu atau lebih role:</p>
+                        <div style="display: flex; flex-direction: column; gap: 10px;">
+                            @foreach($roles as $role)
+                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                                <input type="checkbox" name="roles[]" value="{{ $role->name }}" 
+                                       style="width: 16px; height: 16px; accent-color: var(--primary);">
+                                <span style="font-size: 14px; color: white;">{{ $role->name }}</span>
+                            </label>
+                            @endforeach
+                        </div>
                     </div>
                     @error('roles')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                        <p class="form-error">{{ $message }}</p>
                     @enderror
                 </div>
 
-                <div class="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                    <a href="{{ route('users.index') }}" class="px-5 py-2.5 text-slate-600 font-medium hover:bg-slate-50 rounded-xl transition-colors">
+                <div style="padding-top: 20px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 12px;">
+                    <a href="{{ route('users.index') }}" class="btn btn-secondary">
                         Batal
                     </a>
-                    <button type="submit" class="px-5 py-2.5 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 transition-colors shadow-lg shadow-red-600/20">
+                    <button type="submit" class="btn btn-primary">
+                        <i data-lucide="save"></i>
                         Simpan User
                     </button>
                 </div>
@@ -82,4 +92,14 @@
         </form>
     </div>
 </div>
+
+@push('styles')
+<style>
+    @media (max-width: 768px) {
+        div[style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+@endpush
 @endsection
