@@ -977,9 +977,19 @@ function startSession() {
 }
 
 function refreshQR() {
-    fetch('/whatsapp/qr').then(r => r.json()).then(data => {
-        if (data.success && data.qr) document.getElementById('qr-image').src = data.qr;
-    });
+    console.log('Fetching QR Code...');
+    fetch('/whatsapp/qr')
+        .then(r => r.json())
+        .then(data => {
+            console.log('QR Response:', data);
+            if (data.success && data.qr) {
+                const img = document.getElementById('qr-image');
+                img.src = data.qr;
+                img.onload = () => console.log('QR Image Loaded');
+                img.onerror = (e) => console.error('QR Image Error', e);
+            }
+        })
+        .catch(err => console.error('Fetch QR Error:', err));
 }
 
 function logout() {
