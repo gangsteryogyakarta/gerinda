@@ -272,7 +272,7 @@ class WhatsAppService
                 $session = config('services.waha.session', 'default');
                 $response = Http::timeout(5)
                     ->withHeaders(['X-Api-Key' => $this->token])
-                    ->get($this->baseUrl . '/api/sessions/' . $session);
+                    ->get($this->baseUrl . '/api/' . $session);
                 
                 if ($response->successful()) {
                     $data = $response->json();
@@ -321,7 +321,7 @@ class WhatsAppService
                 // Fetch QR as image
                 $response = Http::timeout(10)
                     ->withHeaders(['X-Api-Key' => $this->token])
-                    ->get($this->baseUrl . '/api/sessions/' . $session . '/auth/qr?format=image');
+                    ->get($this->baseUrl . '/api/' . $session . '/auth/qr?format=image');
                 
                 if ($response->successful()) {
                     // Convert image binary to base64 data URI
@@ -351,29 +351,30 @@ class WhatsAppService
     public function startSession(): array
     {
         if ($this->provider === 'waha') {
-            $session = config('services.waha.session', 'gerindra');
+            $session = config('services.waha.session', 'default');
             
             // Check if session exists first
-            $check = Http::get($this->baseUrl . '/api/sessions/' . $session);
+            $check = Http::withHeaders(['X-Api-Key' => $this->token])
+                ->get($this->baseUrl . '/api/' . $session);
+            
             if ($check->successful()) {
-                // If stopped, start it? Usually WAHA auto-starts but explicit start might be needed or ignored
-                return ['success' => true, 'message' => 'Session already exists'];
+                $data = $check->json();
+                // If session exists but stopped, start it
+                if (($data['status'] ?? '') === 'STOPPED') {
+                    $response = Http::withHeaders(['X-Api-Key' => $this->token])
+                        ->post($this->baseUrl . '/api/' . $session . '/start');
+                    return [
+                        'success' => $response->successful(),
+                        'message' => 'Session started',
+                        'data' => $response->json(),
+                    ];
+                }
+                return ['success' => true, 'message' => 'Session already running'];
             }
 
-            // Create/Start session
+            // For WAHA Core, default session already exists, just start it
             $response = Http::withHeaders(['X-Api-Key' => $this->token])
-                ->post($this->baseUrl . '/api/sessions', [
-                    'name' => $session,
-                    'config' => [
-                        'proxy' => null,
-                        'noweb' => [
-                            'store' => [
-                                'enabled' => true,
-                                'full_sync' => false
-                            ]
-                        ]
-                    ]
-                ]);
+                ->post($this->baseUrl . '/api/' . $session . '/start');
             return [
                 'success' => $response->successful(),
                 'data' => $response->json(),
@@ -396,10 +397,10 @@ class WhatsAppService
                     'data' => $response->json(),
                 ];
             } elseif ($this->provider === 'waha') {
-                $session = config('services.waha.session', 'gerindra');
+                $session = config('services.waha.session', 'default');
                 $response = Http::timeout(10)
                     ->withHeaders(['X-Api-Key' => $this->token])
-                    ->post($this->baseUrl . '/api/sessions/' . $session . '/logout');
+                    ->post($this->baseUrl . '/api/' . $session . '/stop');
                     
                 return [
                     'success' => $response->successful(),
