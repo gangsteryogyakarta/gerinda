@@ -30,8 +30,12 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-# Check Docker Compose
-if ! command -v docker-compose &> /dev/null; then
+# Determine Docker Compose command
+if docker compose version &> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
+elif command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+else
     log_error "Docker Compose is not installed"
     exit 1
 fi
@@ -46,9 +50,9 @@ log_info "Stopping any existing standalone WAHA container..."
 docker stop gerindra-waha 2>/dev/null || true
 docker rm gerindra-waha 2>/dev/null || true
 
-log_info "Deploying WAHA via Docker Compose..."
+log_info "Deploying WAHA via Docker Compose ($DOCKER_COMPOSE)..."
 # Use -p gerindra to ensure consistent project name across deployments (releases)
-docker-compose -f docker-compose.waha.yml -p gerindra up -d
+$DOCKER_COMPOSE -f docker-compose.waha.yml -p gerindra up -d
 
 log_success "WAHA container deployed successfully!"
 echo ""
