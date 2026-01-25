@@ -25,22 +25,34 @@
     </div>
 
     <!-- Stats -->
-    <div class="stats-grid" style="margin-bottom: 24px;">
-        <div class="stat-card">
-            <div class="stat-value">{{ $registrations->total() }}</div>
-            <div class="stat-label">Total Peserta</div>
+    <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+        <div class="stat-card" style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.25rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span class="stat-label" style="color: var(--text-muted); font-size: 0.875rem; font-weight: 500;">Total Peserta</span>
+                <i data-lucide="users" style="width: 1.25rem; height: 1.25rem; color: var(--primary);"></i>
+            </div>
+            <div class="stat-value" style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">{{ $registrations->total() }}</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ $event->registrations()->confirmed()->count() }}</div>
-            <div class="stat-label">Confirmed</div>
+        <div class="stat-card" style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.25rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span class="stat-label" style="color: var(--text-muted); font-size: 0.875rem; font-weight: 500;">Confirmed</span>
+                <i data-lucide="check-circle" style="width: 1.25rem; height: 1.25rem; color: var(--success);"></i>
+            </div>
+            <div class="stat-value" style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">{{ $event->registrations()->confirmed()->count() }}</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ $event->registrations()->checkedIn()->count() }}</div>
-            <div class="stat-label">Sudah Hadir</div>
+        <div class="stat-card" style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.25rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span class="stat-label" style="color: var(--text-muted); font-size: 0.875rem; font-weight: 500;">Sudah Hadir</span>
+                <i data-lucide="user-check" style="width: 1.25rem; height: 1.25rem; color: var(--info);"></i>
+            </div>
+            <div class="stat-value" style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">{{ $event->registrations()->checkedIn()->count() }}</div>
         </div>
-        <div class="stat-card">
-            <div class="stat-value">{{ $event->registrations()->where('registration_status', 'waitlist')->count() }}</div>
-            <div class="stat-label">Waiting List</div>
+        <div class="stat-card" style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1.25rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span class="stat-label" style="color: var(--text-muted); font-size: 0.875rem; font-weight: 500;">Waiting List</span>
+                <i data-lucide="clock" style="width: 1.25rem; height: 1.25rem; color: var(--warning);"></i>
+            </div>
+            <div class="stat-value" style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">{{ $event->registrations()->where('registration_status', 'waitlist')->count() }}</div>
         </div>
     </div>
 
