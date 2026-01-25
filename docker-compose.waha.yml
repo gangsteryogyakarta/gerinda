@@ -12,6 +12,10 @@ services:
       - WHATSAPP_API_KEY=gerindra-secret-key-2026
       - WHATSAPP_DEFAULT_ENGINE=WEBJS
       
+      # Dashboard Access
+      - WAHA_DASHBOARD_USERNAME=admin
+      - WAHA_DASHBOARD_PASSWORD=gerindra2026
+      
       # Session Configuration
       - WHATSAPP_RESTART_ALL_SESSIONS=true
       - WHATSAPP_START_SESSION=gerindra
