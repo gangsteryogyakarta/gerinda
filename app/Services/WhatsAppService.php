@@ -272,7 +272,7 @@ class WhatsAppService
                 $session = config('services.waha.session', 'default');
                 $response = Http::timeout(5)
                     ->withHeaders(['X-Api-Key' => $this->token])
-                    ->get($this->baseUrl . '/api/' . $session);
+                    ->get($this->baseUrl . '/api/sessions/' . $session);
                 
                 if ($response->successful()) {
                     $data = $response->json();
@@ -318,7 +318,7 @@ class WhatsAppService
                 ];
             } elseif ($this->provider === 'waha') {
                 $session = config('services.waha.session', 'default');
-                // Fetch QR as image
+                // Fetch QR as image - correct WAHA endpoint
                 $response = Http::timeout(10)
                     ->withHeaders(['X-Api-Key' => $this->token])
                     ->get($this->baseUrl . '/api/' . $session . '/auth/qr?format=image');
@@ -355,7 +355,7 @@ class WhatsAppService
             
             // Check if session exists first
             $check = Http::withHeaders(['X-Api-Key' => $this->token])
-                ->get($this->baseUrl . '/api/' . $session);
+                ->get($this->baseUrl . '/api/sessions/' . $session);
             
             if ($check->successful()) {
                 $data = $check->json();
