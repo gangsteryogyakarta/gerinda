@@ -288,6 +288,8 @@
     --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
 }
 
+.d-none { display: none !important; }
+
 /* === Base === */
 .wa-blast-page {
     font-family: 'Inter', sans-serif;
