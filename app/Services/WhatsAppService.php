@@ -269,8 +269,10 @@ class WhatsAppService
                     'quota' => $data['quota'] ?? null,
                 ];
             } elseif ($this->provider === 'waha') {
-                $session = config('services.waha.session', 'gerindra');
-                $response = Http::timeout(5)->get($this->baseUrl . '/api/sessions/' . $session);
+                $session = config('services.waha.session', 'default');
+                $response = Http::timeout(5)
+                    ->withHeaders(['X-Api-Key' => $this->token])
+                    ->get($this->baseUrl . '/api/sessions/' . $session);
                 
                 if ($response->successful()) {
                     $data = $response->json();
@@ -315,9 +317,11 @@ class WhatsAppService
                     'status' => $data['status'] ?? 'unknown',
                 ];
             } elseif ($this->provider === 'waha') {
-                $session = config('services.waha.session', 'gerindra');
+                $session = config('services.waha.session', 'default');
                 // Fetch QR as image
-                $response = Http::timeout(10)->get($this->baseUrl . '/api/sessions/' . $session . '/auth/qr?format=image');
+                $response = Http::timeout(10)
+                    ->withHeaders(['X-Api-Key' => $this->token])
+                    ->get($this->baseUrl . '/api/sessions/' . $session . '/auth/qr?format=image');
                 
                 if ($response->successful()) {
                     // Convert image binary to base64 data URI
