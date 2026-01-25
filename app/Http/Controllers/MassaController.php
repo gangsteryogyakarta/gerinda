@@ -18,7 +18,8 @@ class MassaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Massa::with(['province', 'regency'])
+        $query = Massa::with(['province:id,name', 'regency:id,name'])
+            ->select(['id', 'nik', 'nama_lengkap', 'jenis_kelamin', 'no_hp', 'province_id', 'regency_id', 'latitude', 'created_at'])
             ->withCount('registrations');
 
         // Search
@@ -43,13 +44,22 @@ class MassaController extends Controller
         }
 
         $massa = $query->orderByDesc('created_at')->paginate(20);
-        $provinces = Province::orderBy('name')->get();
+        
+        // Cache provinces for 24 hours (static data)
+        $provinces = cache()->remember('provinces_list', 86400, function () {
+            return Province::select(['id', 'name'])->orderBy('name')->get();
+        });
 
-        $stats = [
-            'total' => Massa::count(),
-            'geocoded' => Massa::whereNotNull('latitude')->count(),
-            'this_month' => Massa::whereMonth('created_at', now()->month)->count(),
-        ];
+        // Consolidated stats with single query (cache for 5 minutes)
+        $stats = cache()->remember('massa_index_stats', 300, function () {
+            return Massa::selectRaw('
+                COUNT(*) as total,
+                SUM(CASE WHEN latitude IS NOT NULL THEN 1 ELSE 0 END) as geocoded,
+                SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) as this_month
+            ', [now()->startOfMonth()])
+            ->first()
+            ->toArray();
+        });
 
         return view('massa.index', compact('massa', 'provinces', 'stats'));
     }
@@ -59,7 +69,10 @@ class MassaController extends Controller
      */
     public function create()
     {
-        $provinces = Province::orderBy('name')->get();
+        // Use cached provinces (24 hours)
+        $provinces = cache()->remember('provinces_list', 86400, function () {
+            return Province::select(['id', 'name'])->orderBy('name')->get();
+        });
         
         return view('massa.create', compact('provinces'));
     }

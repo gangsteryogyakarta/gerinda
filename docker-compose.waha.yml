@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  waha:
+    image: devlikeapro/waha:latest
+    container_name: gerindra-waha
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # API Configuration
+      - WHATSAPP_API_KEY=gerindra-secret-key-2026
+      - WHATSAPP_DEFAULT_ENGINE=WEBJS
+      
+      # Session Configuration
+      - WHATSAPP_RESTART_ALL_SESSIONS=true
+      - WHATSAPP_START_SESSION=gerindra
+      
+      # Webhook Configuration (optional - for receiving messages)
+      # - WHATSAPP_HOOK_URL=http://host.docker.internal:8000/api/webhook/whatsapp
+      # - WHATSAPP_HOOK_EVENTS=message,message.ack,session.status
+      
+      # File Storage
+      - WHATSAPP_FILES_MIMETYPES=image/jpeg,image/png,application/pdf
+      
+      # Logging
+      - LOG_LEVEL=info
+      
+    volumes:
+      - waha_sessions:/app/.sessions
+      - waha_media:/app/media
+    
+    # For accessing host services from container
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  waha_sessions:
+  waha_media:

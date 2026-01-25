@@ -3,12 +3,19 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\CheckinController;
+use App\Http\Controllers\HealthController;
 use App\Http\Controllers\LotteryController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('dashboard');
 });
+
+// Health Check Routes (for monitoring & load balancers)
+Route::get('/health', [HealthController::class, 'check'])->name('health');
+Route::get('/health/detailed', [HealthController::class, 'detailed'])
+    ->middleware('auth')
+    ->name('health.detailed');
 
 // Authentication Routes
 Route::get('/login', [App\Http\Controllers\AuthController::class, 'showLoginForm'])->name('login');
@@ -81,16 +88,37 @@ Route::middleware(['auth'])->group(function () {
     
     // Tickets
     Route::get('/tickets', [App\Http\Controllers\TicketController::class, 'index'])->name('tickets.index');
+    
+    // WhatsApp Blast
+    Route::prefix('whatsapp')->group(function () {
+        Route::get('/', [App\Http\Controllers\WhatsAppController::class, 'index'])->name('whatsapp.index');
+        Route::get('/health', [App\Http\Controllers\WhatsAppController::class, 'health'])->name('whatsapp.health');
+        Route::get('/qr', [App\Http\Controllers\WhatsAppController::class, 'qrCode'])->name('whatsapp.qr');
+        Route::post('/session/start', [App\Http\Controllers\WhatsAppController::class, 'startSession'])->name('whatsapp.session.start');
+        Route::post('/session/stop', [App\Http\Controllers\WhatsAppController::class, 'stopSession'])->name('whatsapp.session.stop');
+        Route::post('/logout', [App\Http\Controllers\WhatsAppController::class, 'logout'])->name('whatsapp.logout');
+        Route::post('/send', [App\Http\Controllers\WhatsAppController::class, 'send'])->name('whatsapp.send');
+        Route::post('/blast', [App\Http\Controllers\WhatsAppController::class, 'blastToMassa'])->name('whatsapp.blast');
+        Route::post('/event/{event}/notify', [App\Http\Controllers\WhatsAppController::class, 'notifyEventRegistrants'])->name('whatsapp.event.notify');
+        Route::post('/check-number', [App\Http\Controllers\WhatsAppController::class, 'checkNumber'])->name('whatsapp.check-number');
+    });
 });
 
-// Public Registration (Accessible without login)
-Route::prefix('daftar')->group(function () {
+// Public Registration (Accessible without login) with rate limiting
+Route::prefix('daftar')->middleware('throttle:registration')->group(function () {
     Route::get('/', [App\Http\Controllers\PublicController::class, 'index'])->name('public.index');
     Route::get('/event/{event}', [App\Http\Controllers\PublicController::class, 'register'])->name('public.register');
     Route::post('/event/{event}', [App\Http\Controllers\PublicController::class, 'store'])->name('public.store');
     Route::get('/success', [App\Http\Controllers\PublicController::class, 'success'])->name('public.success');
-    Route::get('/check-nik', [App\Http\Controllers\PublicController::class, 'checkNik'])->name('public.check-nik');
+    
+    // NIK lookup with stricter rate limit
+    Route::get('/check-nik', [App\Http\Controllers\PublicController::class, 'checkNik'])
+        ->middleware('throttle:nik-lookup')
+        ->name('public.check-nik');
+    
+    // Address lookups
     Route::get('/regencies', [App\Http\Controllers\PublicController::class, 'regencies'])->name('public.regencies');
     Route::get('/districts', [App\Http\Controllers\PublicController::class, 'districts'])->name('public.districts');
     Route::get('/villages', [App\Http\Controllers\PublicController::class, 'villages'])->name('public.villages');
 });
+

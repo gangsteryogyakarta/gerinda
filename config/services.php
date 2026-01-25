@@ -58,4 +58,27 @@ return [
         'token' => env('WA_GATEWAY_TOKEN'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | WAHA (WhatsApp HTTP API) - Self-hosted
+    |--------------------------------------------------------------------------
+    */
+    'waha' => [
+        'url' => env('WAHA_URL', 'http://localhost:3000'),
+        'api_key' => env('WAHA_API_KEY', 'gerindra-secret-key-2026'),
+        'session' => env('WAHA_SESSION', 'gerindra'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | WhatsApp Unified Configuration
+    |--------------------------------------------------------------------------
+    | Providers: baileys, fonnte, waha, generic
+    */
+    'whatsapp' => [
+        'provider' => env('WHATSAPP_PROVIDER', 'baileys'),
+        'baileys_url' => env('BAILEYS_URL', 'http://localhost:3001'),
+        'fonnte_token' => env('FONNTE_TOKEN', ''),
+    ],
+
 ];

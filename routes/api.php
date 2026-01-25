@@ -14,8 +14,9 @@ use App\Http\Controllers\Api\MassaController;
 |--------------------------------------------------------------------------
 */
 
-// Public routes
-Route::prefix('v1')->group(function () {
+
+// Public routes with rate limiting
+Route::prefix('v1')->middleware('throttle:60,1')->group(function () {
     
     // Event categories (public)
     Route::get('/event-categories', [EventController::class, 'categories']);
@@ -24,8 +25,9 @@ Route::prefix('v1')->group(function () {
     Route::get('/events', [EventController::class, 'index']);
     Route::get('/events/{event}', [EventController::class, 'show']);
     
-    // Check NIK availability (for registration form)
-    Route::post('/check-nik', [RegistrationController::class, 'checkNik']);
+    // Check NIK availability (for registration form) - stricter rate limit
+    Route::post('/check-nik', [RegistrationController::class, 'checkNik'])
+        ->middleware('throttle:30,1');
     
     // Validate ticket (for check-in preview)
     Route::post('/validate-ticket', [CheckinController::class, 'validateTicket']);

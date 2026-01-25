@@ -966,6 +966,10 @@
                         <i data-lucide="ticket"></i>
                         <span>Tiket</span>
                     </a>
+                    <a href="{{ route('whatsapp.index') }}" class="nav-item {{ request()->routeIs('whatsapp.*') ? 'active' : '' }}">
+                        <i data-lucide="message-circle"></i>
+                        <span>WhatsApp Blast</span>
+                    </a>
                 </div>
 
                 <div class="nav-section">

@@ -42,7 +42,11 @@ class EventController extends Controller
         }
 
         $events = $query->orderByDesc('created_at')->paginate(12);
-        $categories = EventCategory::active()->ordered()->get();
+        
+        // Cache categories for 1 hour (rarely changes)
+        $categories = cache()->remember('event_categories_active', 3600, function () {
+            return EventCategory::active()->ordered()->get(['id', 'name', 'icon']);
+        });
 
         return view('events.index', compact('events', 'categories'));
     }
@@ -52,8 +56,15 @@ class EventController extends Controller
      */
     public function create()
     {
-        $categories = EventCategory::active()->ordered()->get();
-        $provinces = Province::orderBy('name')->get();
+        // Cache categories for 1 hour
+        $categories = cache()->remember('event_categories_active', 3600, function () {
+            return EventCategory::active()->ordered()->get(['id', 'name', 'icon']);
+        });
+        
+        // Cache provinces for 24 hours (static data)
+        $provinces = cache()->remember('provinces_list', 86400, function () {
+            return Province::select(['id', 'name'])->orderBy('name')->get();
+        });
 
         return view('events.create', compact('categories', 'provinces'));
     }
