@@ -910,10 +910,18 @@ function setupTabs() {
 }
 
 function checkHealth() {
-    fetch('/whatsapp/health')
-        .then(r => r.json())
+    fetch('/whatsapp/health', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+        .then(r => {
+            if (!r.ok) throw new Error('Network response was not ok');
+            return r.json();
+        })
         .then(data => updateConnectionStatus(data))
-        .catch(() => showDisconnected('Server Offline'));
+        .catch(e => {
+            console.error('Check Health Error:', e);
+            showDisconnected('Server Offline / Auth Error');
+        });
 }
 
 function updateConnectionStatus(data) {
@@ -971,22 +979,37 @@ function startSession() {
     const btn = document.getElementById('btn-start-session');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memulai...';
-    fetch('/whatsapp/session/start', { method: 'POST', headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'} })
+    fetch('/whatsapp/session/start', { 
+        method: 'POST', 
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    })
+        .then(r => r.json())
         .then(() => checkHealth())
+        .catch(e => console.error('Start Session Error:', e))
         .finally(() => { btn.disabled = false; btn.innerHTML = '<i class="fas fa-play"></i> Mulai Sesi'; });
 }
 
 function refreshQR() {
     console.log('Fetching QR Code...');
-    fetch('/whatsapp/qr')
-        .then(r => r.json())
+    fetch('/whatsapp/qr', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' }
+    })
+        .then(r => {
+            const contentType = r.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") === -1) {
+                return r.text().then(text => { throw new Error("Not JSON response: " + text.substring(0, 100)); });
+            }
+            return r.json();
+        })
         .then(data => {
             console.log('QR Response:', data);
             if (data.success && data.qr) {
                 const img = document.getElementById('qr-image');
                 img.src = data.qr;
-                img.onload = () => console.log('QR Image Loaded');
-                img.onerror = (e) => console.error('QR Image Error', e);
             }
         })
         .catch(err => console.error('Fetch QR Error:', err));
@@ -994,7 +1017,14 @@ function refreshQR() {
 
 function logout() {
     if (!confirm('Yakin ingin memutus koneksi WhatsApp?')) return;
-    fetch('/whatsapp/logout', { method: 'POST', headers: {'X-CSRF-TOKEN': '{{ csrf_token() }}'} }).then(() => checkHealth());
+    fetch('/whatsapp/logout', { 
+        method: 'POST', 
+        headers: {
+            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        }
+    }).then(() => checkHealth());
 }
 
 function loadProvinces() {
@@ -1004,11 +1034,32 @@ function loadProvinces() {
     });
 }
 
+function loadProvinces() {
+    fetch('/api/v1/locations/provinces')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('bulk-province');
+            const items = Array.isArray(data) ? data : (data.data || []);
+            if (select) {
+                items.forEach(p => select.innerHTML += `<option value="${p.id}">${p.name}</option>`);
+            }
+        })
+        .catch(e => console.error('Load Provinces Error:', e));
+}
+
 function loadEvents() {
-    fetch('/api/v1/events?status=published,ongoing').then(r => r.json()).then(data => {
+    fetch('/api/v1/events', {
+        headers: { 'Accept': 'application/json' }
+    })
+    .then(r => r.json())
+    .then(data => {
         const select = document.getElementById('event-select');
-        (data.data || data).forEach(e => select.innerHTML += `<option value="${e.id}">${e.name}</option>`);
-    });
+        const items = Array.isArray(data) ? data : (data.data || []);
+        if (select) {
+            items.forEach(e => select.innerHTML += `<option value="${e.id}">${e.name}</option>`);
+        }
+    })
+    .catch(e => console.error('Load Events Error:', e));
 }
 
 function setupCharCounters() {
