@@ -302,7 +302,7 @@
                             </svg>
                             <input type="email" name="email" id="email" required 
                                 class="form-input"
-                                placeholder="admin@gerindra.or.id" 
+                                placeholder="admin@gerindradiy.com" 
                                 value="{{ old('email') }}"
                                 autocomplete="email">
                         </div>
@@ -328,18 +328,9 @@
                         </label>
                     </div>
 
-                    <button type="submit" class="btn-login" id="btnLogin">
-                        Masuk Dashboard
-                    </button>
-                </form>
-
-                <div class="demo-box">
-                    <p class="demo-text">
-                        <strong>Demo Account:</strong><br>
-                        Email: admin@gerindra.or.id<br>
-                        Password: gerindra2024
-                    </p>
-                </div>
+                <button type="submit" class="btn-login" id="btnLogin">
+                    Masuk Dashboard
+                </button>
             </div>
 
             <!-- Footer -->
