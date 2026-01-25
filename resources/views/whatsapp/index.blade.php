@@ -4,11 +4,8 @@
 
 @section('content')
 <div class="wa-blast-page">
-    <!-- Animated Background -->
-    <div class="animated-bg">
-        <div class="gradient-orb orb-1"></div>
-        <div class="gradient-orb orb-2"></div>
-    </div>
+    <!-- Background -->
+    <!-- Animated background removed for performance -->
 
     <!-- Hero Header -->
     <header class="wa-header">
@@ -284,8 +281,8 @@
     --gray-500: #64748B;
     --radius: 16px;
     --radius-sm: 10px;
-    --shadow: 0 4px 20px rgba(0,0,0,0.08);
-    --shadow-lg: 0 10px 40px rgba(0,0,0,0.12);
+    --shadow: 0 1px 3px rgba(0,0,0,0.1);
+    --shadow-lg: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .d-none { display: none !important; }
@@ -296,51 +293,13 @@
     min-height: 100vh;
     background: var(--gray-50);
     position: relative;
-}
-
-/* === Animated Background === */
-.animated-bg {
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    overflow: hidden;
-}
-
-.gradient-orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(100px);
-    opacity: 0.3;
-}
-
-.orb-1 {
-    width: 500px;
-    height: 500px;
-    background: linear-gradient(135deg, var(--primary) 0%, #FF6B6B 100%);
-    top: -150px;
-    right: -100px;
-    animation: float 25s ease-in-out infinite;
-}
-
-.orb-2 {
-    width: 400px;
-    height: 400px;
-    background: linear-gradient(135deg, #3B82F6 0%, var(--primary) 100%);
-    bottom: -100px;
-    left: -100px;
-    animation: float 20s ease-in-out infinite reverse;
-}
-
-@keyframes float {
-    0%, 100% { transform: translate(0, 0); }
-    50% { transform: translate(30px, -30px); }
+    /* Removed heavy animated background styles */
 }
 
 /* === Header === */
 .wa-header {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    padding: 2rem 2rem 3rem;
+    background: var(--primary); /* Solid color instead of gradient for performance */
+    padding: 1.5rem 2rem 2.5rem;
     position: relative;
     z-index: 1;
 }
@@ -386,12 +345,12 @@
     align-items: center;
     gap: 0.5rem;
     background: rgba(255,255,255,0.2);
-    backdrop-filter: blur(10px);
-    padding: 0.6rem 1.2rem;
+    /* Removed backdrop-filter */
+    padding: 0.5rem 1rem;
     border-radius: 50px;
     color: white;
     font-weight: 500;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
 }
 
 .pill-dot {
@@ -399,16 +358,11 @@
     height: 8px;
     border-radius: 50%;
     background: var(--warning);
-    animation: pulse 2s infinite;
+    /* Removed pulse animation */
 }
 
 .connection-pill.connected .pill-dot { background: var(--success); }
 .connection-pill.disconnected .pill-dot { background: var(--danger); }
-
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-}
 
 /* === Dashboard === */
 .wa-dashboard {
@@ -430,17 +384,17 @@
 .stat-item {
     background: white;
     border-radius: var(--radius);
-    padding: 1.25rem;
+    padding: 1rem;
     display: flex;
     align-items: center;
     gap: 1rem;
-    box-shadow: var(--shadow);
-    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid var(--gray-200);
+    box-shadow: none; /* Flatter design */
 }
 
 .stat-item:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    border-color: var(--gray-300);
+    /* Removed transitions/transforms */
 }
 
 .stat-icon {
@@ -472,6 +426,7 @@
 .panel {
     background: white;
     border-radius: var(--radius);
+    border: 1px solid var(--gray-200);
     box-shadow: var(--shadow);
     overflow: hidden;
 }
@@ -565,23 +520,17 @@
 
 /* Success Check */
 .success-check {
-    width: 80px;
-    height: 80px;
+    width: 60px;
+    height: 60px;
     margin: 0 auto 1rem;
-    background: linear-gradient(135deg, var(--success) 0%, #059669 100%);
+    background: var(--success);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 2rem;
-    box-shadow: 0 0 0 10px rgba(16,185,129,0.15);
-    animation: success-pulse 2s infinite;
-}
-
-@keyframes success-pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.3); }
-    50% { box-shadow: 0 0 0 15px rgba(16,185,129,0); }
+    font-size: 1.5rem;
+    /* Removed large shadow and pulse animation */
 }
 
 .connection-state h4 { color: var(--success); margin: 0 0 0.25rem; font-size: 1.25rem; }
@@ -626,7 +575,7 @@
     color: white;
 }
 
-.btn-action.btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-action.btn-primary:hover { background: var(--primary-dark); }
 
 .btn-action.btn-secondary {
     background: var(--gray-100);
@@ -690,12 +639,7 @@
 }
 
 .tab-content { display: none; }
-.tab-content.active { display: block; animation: fadeIn 0.3s; }
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+.tab-content.active { display: block; }
 
 /* === Form Styles === */
 .message-form { display: flex; flex-direction: column; gap: 1rem; }
@@ -829,8 +773,7 @@
     background: var(--primary);
     color: white;
     border-color: var(--primary);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow);
+    /* Removed transform/shadow on hover */
 }
 
 .template-chip i { font-size: 0.9rem; }
