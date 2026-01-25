@@ -185,12 +185,7 @@
                             </a>
                         @endif
                         
-                        @if($event->enable_lottery)
-                            <a href="{{ route('lottery.event', $event) }}" class="btn btn-secondary">
-                                <i class="lucide-gift"></i>
-                                Undian Hadiah
-                            </a>
-                        @endif
+
 
                         <form action="{{ route('events.batch-tickets', $event) }}" method="POST" style="display: inline;">
                             @csrf
@@ -255,10 +250,7 @@
                             <i class="lucide-scan"></i>
                             Check-in
                         </div>
-                        <div class="feature-item {{ $event->enable_lottery ? 'active' : '' }}">
-                            <i class="lucide-gift"></i>
-                            Undian
-                        </div>
+
                         <div class="feature-item {{ $event->send_wa_notification ? 'active' : '' }}">
                             <i class="lucide-message-circle"></i>
                             WhatsApp
@@ -267,27 +259,7 @@
                 </div>
             </div>
 
-            <!-- Lottery Prizes -->
-            @if($event->enable_lottery && $event->lotteryPrizes->count() > 0)
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">🎁 Hadiah Undian</h3>
-                    </div>
-                    <div class="card-body" style="padding: 12px;">
-                        @foreach($event->lotteryPrizes as $prize)
-                            <div class="prize-item">
-                                <div class="prize-info">
-                                    <span class="prize-name">{{ $prize->name }}</span>
-                                    <span class="prize-qty">{{ $prize->remaining_quantity }}/{{ $prize->quantity }} tersisa</span>
-                                </div>
-                                <div class="progress" style="height: 6px;">
-                                    <div class="progress-bar success" style="width: {{ ($prize->remaining_quantity / $prize->quantity) * 100 }}%;"></div>
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-            @endif
+
         </div>
     </div>
 

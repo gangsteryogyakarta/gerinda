@@ -93,7 +93,6 @@ class EventController extends Controller
             'enable_waitlist' => 'boolean',
             'require_ticket' => 'boolean',
             'enable_checkin' => 'boolean',
-            'enable_lottery' => 'boolean',
             'send_wa_notification' => 'boolean',
         ]);
 
@@ -122,7 +121,6 @@ class EventController extends Controller
             'regency',
             'district',
             'customFields' => fn($q) => $q->active()->ordered(),
-            'lotteryPrizes' => fn($q) => $q->active()->ordered(),
         ]);
 
         $event->loadCount([
@@ -178,7 +176,6 @@ class EventController extends Controller
             'enable_waitlist' => 'boolean',
             'require_ticket' => 'boolean',
             'enable_checkin' => 'boolean',
-            'enable_lottery' => 'boolean',
             'send_wa_notification' => 'boolean',
             'status' => 'sometimes|in:draft,published,ongoing,completed,cancelled',
         ]);

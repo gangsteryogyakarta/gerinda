@@ -125,11 +125,6 @@ class Event extends Model
         return $this->hasMany(EventStatistic::class);
     }
 
-    public function lotteryPrizes(): HasMany
-    {
-        return $this->hasMany(LotteryPrize::class);
-    }
-
     // Accessors
     public function getIsFullAttribute(): bool
     {
