@@ -59,11 +59,9 @@ class WhatsAppController extends Controller
      */
     public function startSession(): JsonResponse
     {
-        // For Baileys, session starts automatically
-        return response()->json([
-            'success' => true,
-            'message' => 'Session starting... Please wait for QR code.',
-        ]);
+        $result = $this->whatsapp->startSession();
+        
+        return response()->json($result);
     }
 
     /**
@@ -174,14 +172,17 @@ class WhatsAppController extends Controller
             ]);
         }
 
-        // For large lists, use Baileys bulk endpoint directly
-        $result = $this->whatsapp->bulkSend($phones, $validated['message']);
+        // Dispatch job
+        \App\Jobs\BulkWhatsAppJob::dispatch(
+            $phones, 
+            $validated['message'],
+            2000 // 2s delay
+        );
         
         return response()->json([
             'success' => true,
-            'message' => 'Bulk message started for ' . count($phones) . ' recipients.',
+            'message' => 'Blast started for ' . count($phones) . ' recipients. Process running in background.',
             'total' => count($phones),
-            'data' => $result,
         ]);
     }
 
@@ -217,14 +218,17 @@ class WhatsAppController extends Controller
 
         $phones = $registrations->pluck('massa.no_hp')->filter()->toArray();
 
-        // Send via bulk
-        $result = $this->whatsapp->bulkSend($phones, $validated['message']);
+        // Dispatch job
+        \App\Jobs\BulkWhatsAppJob::dispatch(
+            $phones, 
+            $validated['message'],
+            2000 // 2s delay
+        );
         
         return response()->json([
             'success' => true,
-            'message' => 'Notification started for ' . count($phones) . ' registrants.',
+            'message' => 'Notification started for ' . count($phones) . ' registrants in background.',
             'total' => count($phones),
-            'data' => $result,
         ]);
     }
 }

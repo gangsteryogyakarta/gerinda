@@ -244,6 +244,9 @@ class WhatsAppService
     /**
      * Check connection status
      */
+    /**
+     * Check connection status
+     */
     public function checkStatus(): array
     {
         try {
@@ -265,6 +268,31 @@ class WhatsAppService
                     'device' => $data['device'] ?? null,
                     'quota' => $data['quota'] ?? null,
                 ];
+            } elseif ($this->provider === 'waha') {
+                $session = config('services.waha.session', 'gerindra');
+                $response = Http::timeout(5)->get($this->baseUrl . '/api/sessions/' . $session);
+                
+                if ($response->successful()) {
+                    $data = $response->json();
+                    // WAHA statuses: 'STOPPED', 'STARTING', 'SCAN_QR_CODE', 'WORKING', 'FAILED'
+                    $wahaStatus = $data['status'] ?? 'STOPPED';
+                    $connected = $wahaStatus === 'WORKING';
+                    
+                    // Map WAHA status to our frontend expectations
+                    $status = match($wahaStatus) {
+                        'WORKING' => 'connected',
+                        'SCAN_QR_CODE' => 'qr',
+                        default => strtolower($wahaStatus)
+                    };
+
+                    return [
+                        'connected' => $connected,
+                        'status' => $status,
+                        'user' => $data['me'] ?? null, // WAHA returns 'me' object with info
+                    ];
+                }
+                
+                return ['connected' => false, 'status' => 'disconnected'];
             }
             return ['connected' => false, 'error' => 'Status check not supported'];
         } catch (\Exception $e) {
@@ -273,25 +301,82 @@ class WhatsAppService
     }
 
     /**
-     * Get QR code (Baileys)
+     * Get QR code
      */
     public function getQrCode(): array
     {
-        if ($this->provider !== 'baileys') {
-            return ['success' => false, 'error' => 'QR code only for Baileys'];
-        }
-
         try {
-            $response = Http::timeout(5)->get($this->baseUrl . '/qr');
-            $data = $response->json();
-            return [
-                'success' => $data['success'] ?? false,
-                'qr' => $data['qr'] ?? null,
-                'status' => $data['status'] ?? 'unknown',
-            ];
+            if ($this->provider === 'baileys') {
+                $response = Http::timeout(5)->get($this->baseUrl . '/qr');
+                $data = $response->json();
+                return [
+                    'success' => $data['success'] ?? false,
+                    'qr' => $data['qr'] ?? null,
+                    'status' => $data['status'] ?? 'unknown',
+                ];
+            } elseif ($this->provider === 'waha') {
+                $session = config('services.waha.session', 'gerindra');
+                // Fetch QR as image
+                $response = Http::timeout(10)->get($this->baseUrl . '/api/sessions/' . $session . '/auth/qr?format=image');
+                
+                if ($response->successful()) {
+                    // Convert image binary to base64 data URI
+                    $type = $response->header('Content-Type');
+                    $base64 = base64_encode($response->body());
+                    $dataUri = 'data:' . $type . ';base64,' . $base64;
+                    
+                    return [
+                        'success' => true,
+                        'qr' => $dataUri,
+                        'status' => 'qr',
+                    ];
+                }
+                
+                return ['success' => false, 'error' => 'Failed to fetch QR'];
+            }
+            
+            return ['success' => false, 'error' => 'QR code not supported for this provider'];
         } catch (\Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Start session
+     */
+    public function startSession(): array
+    {
+        if ($this->provider === 'waha') {
+            $session = config('services.waha.session', 'gerindra');
+            
+            // Check if session exists first
+            $check = Http::get($this->baseUrl . '/api/sessions/' . $session);
+            if ($check->successful()) {
+                // If stopped, start it? Usually WAHA auto-starts but explicit start might be needed or ignored
+                return ['success' => true, 'message' => 'Session already exists'];
+            }
+
+            // Create/Start session
+            $response = Http::withHeaders(['X-Api-Key' => $this->token])
+                ->post($this->baseUrl . '/api/sessions', [
+                    'name' => $session,
+                    'config' => [
+                        'proxy' => null,
+                        'noweb' => [
+                            'store' => [
+                                'enabled' => true,
+                                'full_sync' => false
+                            ]
+                        ]
+                    ]
+                ]);
+            return [
+                'success' => $response->successful(),
+                'data' => $response->json(),
+            ];
+        }
+        
+        return ['success' => true, 'message' => 'Auto-started for this provider'];
     }
 
     /**
@@ -299,16 +384,25 @@ class WhatsAppService
      */
     public function logout(): array
     {
-        if ($this->provider !== 'baileys') {
-            return ['success' => false, 'error' => 'Logout only for Baileys'];
-        }
-
         try {
-            $response = Http::timeout(10)->post($this->baseUrl . '/logout');
-            return [
-                'success' => $response->successful(),
-                'data' => $response->json(),
-            ];
+            if ($this->provider === 'baileys') {
+                $response = Http::timeout(10)->post($this->baseUrl . '/logout');
+                return [
+                    'success' => $response->successful(),
+                    'data' => $response->json(),
+                ];
+            } elseif ($this->provider === 'waha') {
+                $session = config('services.waha.session', 'gerindra');
+                $response = Http::timeout(10)
+                    ->withHeaders(['X-Api-Key' => $this->token])
+                    ->post($this->baseUrl . '/api/sessions/' . $session . '/logout');
+                    
+                return [
+                    'success' => $response->successful(),
+                    'data' => $response->json(),
+                ];
+            }
+            return ['success' => false, 'error' => 'Logout not supported for this provider'];
         } catch (\Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
         }

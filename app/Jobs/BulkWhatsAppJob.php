@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\WahaService;
+use App\Services\WhatsAppService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -22,7 +22,7 @@ class BulkWhatsAppJob implements ShouldQueue
     /**
      * The number of seconds the job can run before timing out.
      */
-    public int $timeout = 3600; // 1 hour for large batches
+    public int $timeout = 7200; // 2 hours for large batches
 
     protected array $phones;
     protected string $message;
@@ -31,7 +31,7 @@ class BulkWhatsAppJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(array $phones, string $message, int $delayMs = 2000)
+    public function __construct(array $phones, string $message, int $delayMs = 1500)
     {
         $this->phones = $phones;
         $this->message = $message;
@@ -41,17 +41,27 @@ class BulkWhatsAppJob implements ShouldQueue
     /**
      * Execute the job.
      */
-    public function handle(WahaService $waha): void
+    public function handle(WhatsAppService $whatsapp): void
     {
         $total = count($this->phones);
         $success = 0;
         $failed = 0;
 
         Log::info("BulkWhatsApp: Starting to send {$total} messages");
+        
+        // Cache initial status
+        cache()->put('bulk_whatsapp_status', [
+            'status' => 'running',
+            'total' => $total,
+            'processed' => 0,
+            'success' => 0,
+            'failed' => 0,
+            'start_time' => now()->timestamp,
+        ], now()->addHours(2));
 
         foreach ($this->phones as $index => $phone) {
             try {
-                $result = $waha->sendText($phone, $this->message);
+                $result = $whatsapp->sendText($phone, $this->message);
                 
                 if ($result['success']) {
                     $success++;
