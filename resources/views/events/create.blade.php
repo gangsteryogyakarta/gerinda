@@ -102,25 +102,13 @@
                             @enderror
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Provinsi</label>
-                                <select name="province_id" id="province_id" class="form-input">
-                                    <option value="">-- Pilih Provinsi --</option>
-                                    @foreach($provinces as $province)
-                                        <option value="{{ $province->id }}" {{ old('province_id') == $province->id ? 'selected' : '' }}>
-                                            {{ $province->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Kabupaten/Kota</label>
-                                <select name="regency_id" id="regency_id" class="form-input">
-                                    <option value="">-- Pilih Kabupaten --</option>
-                                </select>
-                            </div>
-                        </div>
+                        <x-location-selector 
+                            :province-id="old('province_id')"
+                            :regency-id="old('regency_id')"
+                            :district-id="old('district_id')"
+                            :village-id="old('village_id')"
+                            :postal-code="old('postal_code')"
+                        />
                     </div>
                 </div>
 
@@ -452,33 +440,6 @@
         }
     }
 
-    // Province-Regency cascade
-    document.getElementById('province_id').addEventListener('change', async function() {
-        const provinceId = this.value;
-        const regencySelect = document.getElementById('regency_id');
-        
-        regencySelect.innerHTML = '<option value="">-- Memuat... --</option>';
-        
-        if (!provinceId) {
-            regencySelect.innerHTML = '<option value="">-- Pilih Kabupaten --</option>';
-            return;
-        }
-        
-        try {
-            const response = await fetch(`/api/v1/regencies?province_id=${provinceId}`);
-            const data = await response.json();
-            
-            regencySelect.innerHTML = '<option value="">-- Pilih Kabupaten --</option>';
-            
-            if (data.data) {
-                data.data.forEach(regency => {
-                    regencySelect.innerHTML += `<option value="${regency.id}">${regency.name}</option>`;
-                });
-            }
-        } catch (error) {
-            console.error('Error loading regencies:', error);
-            regencySelect.innerHTML = '<option value="">-- Error memuat data --</option>';
-        }
-    });
+
 </script>
 @endpush

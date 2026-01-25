@@ -154,23 +154,7 @@ return new class extends Migration
             });
         }
 
-        // =====================================================
-        // LOTTERY TABLES INDEXES
-        // =====================================================
 
-        // lottery_prizes - event + is_active
-        if (!$this->indexExists('lottery_prizes', 'idx_prize_event_active')) {
-            Schema::table('lottery_prizes', function (Blueprint $table) {
-                $table->index(['event_id', 'is_active'], 'idx_prize_event_active');
-            });
-        }
-
-        // lottery_draws - event + drawn_at
-        if (!$this->indexExists('lottery_draws', 'idx_draw_event_time')) {
-            Schema::table('lottery_draws', function (Blueprint $table) {
-                $table->index(['event_id', 'drawn_at'], 'idx_draw_event_time');
-            });
-        }
     }
 
     public function down(): void
@@ -182,8 +166,6 @@ return new class extends Migration
             'event_registrations' => ['idx_reg_event_regstatus', 'idx_reg_event_attendance', 'idx_reg_ticket_lookup', 'idx_reg_lottery', 'idx_reg_massa'],
             'checkin_logs' => ['idx_checkin_event_time', 'idx_checkin_action'],
             'notification_logs' => ['idx_notif_status', 'idx_notif_status_time'],
-            'lottery_prizes' => ['idx_prize_event_active'],
-            'lottery_draws' => ['idx_draw_event_time'],
         ];
 
         foreach ($indexes as $table => $tableIndexes) {

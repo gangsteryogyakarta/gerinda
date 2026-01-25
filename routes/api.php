@@ -30,7 +30,15 @@ Route::prefix('v1')->middleware('throttle:60,1')->group(function () {
         ->middleware('throttle:30,1');
     
     // Validate ticket (for check-in preview)
+    // Validate ticket (for check-in preview)
     Route::post('/validate-ticket', [CheckinController::class, 'validateTicket']);
+
+    // Location Data (Public)
+    Route::get('/locations/provinces', [\App\Http\Controllers\Api\LocationController::class, 'provinces']);
+    Route::get('/locations/regencies/{province}', [\App\Http\Controllers\Api\LocationController::class, 'regencies']);
+    Route::get('/locations/districts/{regency}', [\App\Http\Controllers\Api\LocationController::class, 'districts']);
+    Route::get('/locations/villages/{district}', [\App\Http\Controllers\Api\LocationController::class, 'villages']);
+    Route::get('/locations/postal-code/{village}', [\App\Http\Controllers\Api\LocationController::class, 'getPostalCode']);
 
     // Protected routes (require authentication)
     Route::middleware(['auth:sanctum'])->group(function () {

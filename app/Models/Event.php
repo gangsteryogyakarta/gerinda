@@ -26,6 +26,8 @@ class Event extends Model
         'province_id',
         'regency_id',
         'district_id',
+        'village_id',
+        'postal_code',
         'latitude',
         'longitude',
         'registration_start',
@@ -96,6 +98,11 @@ class Event extends Model
     public function district(): BelongsTo
     {
         return $this->belongsTo(District::class);
+    }
+
+    public function village(): BelongsTo
+    {
+        return $this->belongsTo(Village::class);
     }
 
     public function creator(): BelongsTo

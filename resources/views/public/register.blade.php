@@ -750,51 +750,15 @@
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label class="form-label">Provinsi <span class="required">*</span></label>
-                        <select name="province_id" id="province_id" class="form-input" required>
-                            <option value="">-- Pilih Provinsi --</option>
-                            @foreach($provinces as $province)
-                                <option value="{{ $province->id }}" 
-                                    {{ (old('province_id', $defaultProvince?->id) == $province->id) ? 'selected' : '' }}>
-                                    {{ $province->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Kabupaten/Kota <span class="required">*</span></label>
-                        <select name="regency_id" id="regency_id" class="form-input" required>
-                            <option value="">-- Pilih Kabupaten/Kota --</option>
-                            @foreach($regencies as $regency)
-                                <option value="{{ $regency->id }}" {{ old('regency_id') == $regency->id ? 'selected' : '' }}>
-                                    {{ $regency->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Kecamatan</label>
-                        <select name="district_id" id="district_id" class="form-input">
-                            <option value="">-- Pilih Kecamatan --</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Kelurahan/Desa</label>
-                        <select name="village_id" id="village_id" class="form-input">
-                            <option value="">-- Pilih Kelurahan/Desa --</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Kode Pos</label>
-                        <input type="text" name="kode_pos" id="kode_pos" class="form-input form-input-sm" 
-                            placeholder="55xxx"
-                            maxlength="10"
-                            value="{{ old('kode_pos') }}">
+                    <div class="full-width">
+                        <x-location-selector 
+                            :province-id="old('province_id', $defaultProvince?->id)"
+                            :regency-id="old('regency_id')"
+                            :district-id="old('district_id')"
+                            :village-id="old('village_id')"
+                            :postal-code="old('postal_code')"
+                            :required="true"
+                        />
                     </div>
                 </div>
             </div>
@@ -924,77 +888,7 @@
 
             regencySelect.innerHTML = '<option value="">Memuat...</option>';
             
-            try {
-                const response = await fetch(`{{ route('public.regencies') }}?province_id=${provinceId}`);
-                const data = await response.json();
 
-                resetDropdown(regencySelect, '-- Pilih Kabupaten/Kota --');
-                enableDropdown(regencySelect);
-                
-                data.forEach(item => {
-                    regencySelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-            } catch (error) {
-                console.error('Error loading regencies:', error);
-                regencySelect.innerHTML = '<option value="">Gagal memuat data</option>';
-            }
-        });
-
-        // 2. Regency -> District
-        regencySelect.addEventListener('change', async function() {
-            const regencyId = this.value;
-            
-            // Reset children
-            resetDropdown(districtSelect, '-- Pilih Kecamatan --');
-            resetDropdown(villageSelect, '-- Pilih Kelurahan/Desa --');
-
-            if (!regencyId) return;
-
-            districtSelect.innerHTML = '<option value="">Memuat...</option>';
-            districtSelect.disabled = false; // Show loading state enabled? or keep logic
-
-            try {
-                const response = await fetch(`{{ route('public.districts') }}?regency_id=${regencyId}`);
-                const data = await response.json();
-
-                resetDropdown(districtSelect, '-- Pilih Kecamatan --');
-                enableDropdown(districtSelect);
-                
-                data.forEach(item => {
-                    districtSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-            } catch (error) {
-                console.error('Error loading districts:', error);
-                districtSelect.innerHTML = '<option value="">Gagal memuat data</option>';
-            }
-        });
-
-        // 3. District -> Village
-        districtSelect.addEventListener('change', async function() {
-            const districtId = this.value;
-            
-            // Reset children
-            resetDropdown(villageSelect, '-- Pilih Kelurahan/Desa --');
-
-            if (!districtId) return;
-
-            villageSelect.innerHTML = '<option value="">Memuat...</option>';
-            
-            try {
-                const response = await fetch(`{{ route('public.villages') }}?district_id=${districtId}`);
-                const data = await response.json();
-
-                resetDropdown(villageSelect, '-- Pilih Kelurahan/Desa --');
-                enableDropdown(villageSelect);
-                
-                data.forEach(item => {
-                    villageSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-            } catch (error) {
-                console.error('Error loading villages:', error);
-                villageSelect.innerHTML = '<option value="">Gagal memuat data</option>';
-            }
-        });
 
         // Form submission
         const form = document.getElementById('registrationForm');

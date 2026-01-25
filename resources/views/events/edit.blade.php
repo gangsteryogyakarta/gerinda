@@ -99,28 +99,13 @@
                             <textarea name="venue_address" class="form-input" rows="2" required>{{ old('venue_address', $event->venue_address) }}</textarea>
                         </div>
 
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label class="form-label">Provinsi</label>
-                                <select name="province_id" class="form-input">
-                                    <option value="">-- Pilih Provinsi --</option>
-                                    @foreach($provinces as $province)
-                                        <option value="{{ $province->id }}" {{ old('province_id', $event->province_id) == $province->id ? 'selected' : '' }}>
-                                            {{ $province->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Kabupaten/Kota</label>
-                                <select name="regency_id" class="form-input">
-                                    <option value="">-- Pilih Kabupaten --</option>
-                                    @if($event->regency)
-                                        <option value="{{ $event->regency_id }}" selected>{{ $event->regency->name }}</option>
-                                    @endif
-                                </select>
-                            </div>
-                        </div>
+                        <x-location-selector 
+                            :province-id="old('province_id', $event->province_id)"
+                            :regency-id="old('regency_id', $event->regency_id)"
+                            :district-id="old('district_id', $event->district_id)"
+                            :village-id="old('village_id', $event->village_id)"
+                            :postal-code="old('postal_code', $event->postal_code)"
+                        />
                     </div>
                 </div>
 
