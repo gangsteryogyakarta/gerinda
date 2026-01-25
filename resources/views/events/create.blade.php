@@ -231,10 +231,65 @@
         </div>
     </form>
     /* Dropdown Styling */
-    select.form-input option {
-        background-color: var(--bg-card);
+    /* Unified Input Styling */
+    .form-input, 
+    select.form-input {
+        width: 100%;
+        background-color: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 12px 16px;
         color: var(--text-primary);
-        padding: 8px;
+        font-size: 14px;
+        outline: none;
+        transition: all 0.2s ease;
+        
+        /* Fix for select elements */
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 16px center;
+        background-size: 16px;
+    }
+
+    /* Force consistent height for select to match inputs */
+    select.form-input {
+        height: 46px; /* Adjust based on your text input computed height */
+    }
+
+    .form-input:focus,
+    select.form-input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+    }
+
+    .form-input:disabled,
+    select.form-input:disabled {
+        background-color: var(--bg-tertiary);
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    /* Placeholder color for empty selects if needed */
+    select.form-input:invalid {
+        color: var(--text-muted);
+    }
+
+    /* Dark mode specific override */
+    @media (prefers-color-scheme: dark) {
+        .form-input,
+        select.form-input {
+            background-color: #1e293b; /* Match your dark theme input bg */
+            border-color: #334155;
+            color: #f8fafc;
+        }
+        
+        select.form-input option {
+            background-color: #1e293b;
+            color: #f8fafc;
+        }
     }
 
     /* Dark mode specific override if needed */
@@ -288,22 +343,7 @@
         color: var(--primary);
     }
 
-    .form-input {
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        border-radius: var(--radius);
-        padding: 12px 16px;
-        color: var(--text-primary);
-        font-size: 14px;
-        width: 100%;
-        outline: none;
-        transition: all 0.2s ease;
-    }
 
-    .form-input:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-    }
 
     .form-input::placeholder {
         color: var(--text-muted);

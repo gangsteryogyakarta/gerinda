@@ -254,22 +254,43 @@
             color: var(--primary);
         }
 
-        .form-input {
-            padding: 0.75rem 1rem;
-            font-size: 0.9375rem;
+    /* Unified Input Styling */
+        .form-input, 
+        select.form-input {
+            width: 100%;
+            background-color: var(--bg-primary);
             border: 1px solid var(--border-medium);
             border-radius: var(--radius-md);
-            background: var(--bg-primary);
+            padding: 0.75rem 1rem;
             color: var(--text-primary);
-            transition: all 0.2s;
+            font-size: 0.9375rem;
             font-family: inherit;
+            outline: none;
+            transition: all 0.2s ease;
+            
+            /* Fix for select elements */
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px;
         }
 
-        .form-input:focus {
+        /* Force consistent height for select to match inputs */
+        select.form-input {
+            height: 48px; /* Approx height of text input with padding */
+        }
+
+        .form-input:focus,
+        select.form-input:focus {
             outline: none;
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
         }
+
+
 
         .form-input::placeholder {
             color: var(--text-muted);
@@ -280,14 +301,7 @@
             font-size: 0.875rem;
         }
 
-        select.form-input {
-            cursor: pointer;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            padding-right: 2.5rem;
-        }
+
 
         .form-row {
             display: grid;
