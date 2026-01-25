@@ -983,12 +983,10 @@
 
                 <div class="nav-section">
                     <div class="nav-section-title">System</div>
-                    @can('user.view')
                     <a href="{{ route('users.index') }}" class="nav-item {{ request()->routeIs('users.*') ? 'active' : '' }}">
                         <i data-lucide="user-cog"></i>
                         <span>Manajemen User</span>
                     </a>
-                    @endcan
                     <a href="{{ route('settings.index') }}" class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}">
                         <i data-lucide="settings"></i>
                         <span>Pengaturan</span>
