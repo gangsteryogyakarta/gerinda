@@ -57,13 +57,23 @@ class DiyLocationSeeder extends Seeder
                         $villCode = $distCode . str_pad($villCounter, 4, '0', STR_PAD_LEFT);
                         $villCounter++;
 
-                        Village::updateOrCreate(
-                            ['district_id' => $district->id, 'name' => $villName],
-                            [
+                        // Check if village exists
+                        $village = Village::where('district_id', $district->id)
+                            ->where('name', $villName)
+                            ->first();
+
+                        if ($village) {
+                            // Only update postal_code, keep existing code
+                            $village->update(['postal_code' => $postalCode]);
+                        } else {
+                            // Create new village with code
+                            Village::create([
+                                'district_id' => $district->id,
+                                'name' => $villName,
                                 'code' => $villCode,
                                 'postal_code' => $postalCode
-                            ]
-                        );
+                            ]);
+                        }
                     }
                 }
             }
