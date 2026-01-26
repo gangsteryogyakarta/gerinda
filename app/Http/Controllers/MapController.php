@@ -35,43 +35,83 @@ class MapController extends Controller
     }
 
     /**
-     * Get massa markers for map (AJAX)
-     */
-    /**
-     * Get massa markers for map (AJAX) - Optimized
+     * Get massa markers for map (AJAX) - With Fallback Coordinates
      */
     public function markers(Request $request)
     {
-        // Cache key based on filters
-        $cacheKey = 'maps_markers_' . md5(json_encode($request->all()));
+        // Disable caching temporarily for debugging
+        $provinceId = $request->input('province');
+        $regencyId = $request->input('regency');
         
-        return cache()->remember($cacheKey, 3600, function() use ($request) {
-            $query = DB::table('massa')
-                ->join('provinces', 'massa.province_id', '=', 'provinces.id')
-                ->leftJoin('regencies', 'massa.regency_id', '=', 'regencies.id')
-                ->whereNotNull('massa.latitude')
-                ->whereNotNull('massa.longitude');
-    
-            // Filter by province
-            if ($provinceId = $request->input('province')) {
-                $query->where('massa.province_id', $provinceId);
+        // Get regency center coordinates for fallback
+        $regencyCoords = DB::table('regencies')
+            ->select('id', 'latitude', 'longitude')
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->pluck('longitude', 'id')
+            ->toArray();
+        
+        $regencyLats = DB::table('regencies')
+            ->select('id', 'latitude')
+            ->whereNotNull('latitude')
+            ->pluck('latitude', 'id')
+            ->toArray();
+        
+        // Build query - include ALL massa, not just those with coordinates
+        $query = DB::table('massa')
+            ->join('provinces', 'massa.province_id', '=', 'provinces.id')
+            ->leftJoin('regencies', 'massa.regency_id', '=', 'regencies.id')
+            ->whereNull('massa.deleted_at');
+
+        // Filter by province
+        if ($provinceId) {
+            $query->where('massa.province_id', $provinceId);
+        }
+
+        // Filter by regency
+        if ($regencyId) {
+            $query->where('massa.regency_id', $regencyId);
+        }
+
+        $massaData = $query->select(
+                'massa.id', 
+                'massa.nama_lengkap as name', 
+                'massa.latitude as lat', 
+                'massa.longitude as lng',
+                'massa.regency_id',
+                DB::raw("CONCAT(COALESCE(regencies.name, ''), ', ', provinces.name) as location"),
+                'regencies.latitude as regency_lat',
+                'regencies.longitude as regency_lng'
+            )
+            ->limit(5000)
+            ->get();
+        
+        // Process markers with fallback coordinates
+        $markers = $massaData->map(function($m) {
+            $lat = $m->lat;
+            $lng = $m->lng;
+            
+            // Use regency coordinates as fallback
+            if (empty($lat) || empty($lng)) {
+                if (!empty($m->regency_lat) && !empty($m->regency_lng)) {
+                    // Add small random offset to prevent stacking (within ~500m radius)
+                    $lat = $m->regency_lat + (rand(-50, 50) / 10000);
+                    $lng = $m->regency_lng + (rand(-50, 50) / 10000);
+                } else {
+                    return null; // No coordinates available
+                }
             }
-    
-            // Filter by regency
-            if ($regencyId = $request->input('regency')) {
-                $query->where('massa.regency_id', $regencyId);
-            }
-    
-            return $query->select(
-                    'massa.id', 
-                    'massa.nama_lengkap as name', 
-                    'massa.latitude as lat', 
-                    'massa.longitude as lng',
-                    DB::raw("CONCAT(COALESCE(regencies.name, ''), ', ', provinces.name) as location")
-                )
-                ->limit(5000)
-                ->get();
-        });
+            
+            return [
+                'id' => $m->id,
+                'name' => $m->name,
+                'lat' => (float) $lat,
+                'lng' => (float) $lng,
+                'location' => $m->location,
+            ];
+        })->filter()->values();
+        
+        return response()->json($markers);
     }
 
     /**

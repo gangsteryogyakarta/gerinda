@@ -215,6 +215,9 @@
                                 <label class="form-label">Pilih Event <span class="required">*</span></label>
                                 <select id="event-select" class="form-input" required>
                                     <option value="">-- Pilih Event --</option>
+                                    @foreach($events as $event)
+                                        <option value="{{ $event->id }}">{{ $event->name }} ({{ $event->event_start ? $event->event_start->format('d M Y') : 'TBA' }})</option>
+                                    @endforeach
                                 </select>
                             </div>
                             <div class="form-group">
@@ -394,6 +397,12 @@
     .tab-btn:hover {
         color: var(--text-primary);
         background: rgba(255,255,255,0.05);
+    }
+    
+    /* Fix for Select Option Colors */
+    select.form-input option {
+        color: #000000;
+        background-color: #ffffff;
     }
 
     .tab-btn.active {

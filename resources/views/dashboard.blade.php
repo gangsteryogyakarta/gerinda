@@ -142,34 +142,23 @@
             </div>
             <div class="card-body" style="padding: 12px 24px;">
                 <div class="activity-list">
-                    @forelse($recentActivities ?? [] as $activity)
+                    @forelse($recentActivities as $activity)
                         <div class="activity-item">
-                            <div class="activity-avatar">
-                                {{ substr($activity['name'] ?? 'U', 0, 1) }}
+                            <div class="activity-avatar" style="background: {{ $activity['type'] == 'checkin' ? 'var(--success)' : 'var(--primary)' }}; color: white;">
+                                <i data-lucide="{{ $activity['type'] == 'checkin' ? 'check-circle' : 'user-plus' }}" style="width: 16px; height: 16px;"></i>
                             </div>
                             <div class="activity-info">
-                                <div class="activity-name">{{ $activity['name'] ?? 'Unknown' }}</div>
-                                <div class="activity-desc">{{ $activity['action'] ?? '' }}</div>
+                                <div class="activity-name">{{ $activity['name'] }}</div>
+                                <div class="activity-desc">{{ $activity['action'] }}</div>
                             </div>
                             <div class="activity-value">
-                                <div class="activity-value-main">{{ $activity['time'] ?? '' }}</div>
+                                <span class="text-muted" style="font-size: 11px;">{{ $activity['time'] }}</span>
                             </div>
                         </div>
                     @empty
-                        @for($i = 0; $i < 5; $i++)
-                            <div class="activity-item">
-                                <div class="activity-avatar" style="background: linear-gradient(135deg, #{{ dechex(rand(100, 255)) . dechex(rand(100, 200)) . dechex(rand(100, 200)) }}, #{{ dechex(rand(100, 200)) . dechex(rand(100, 200)) . dechex(rand(100, 255)) }}); color: white;">
-                                    {{ chr(65 + $i) }}
-                                </div>
-                                <div class="activity-info">
-                                    <div class="activity-name">Peserta {{ $i + 1 }}</div>
-                                    <div class="activity-desc">Check-in berhasil</div>
-                                </div>
-                                <div class="activity-value">
-                                    <div class="activity-value-main">{{ now()->subMinutes(rand(5, 60))->format('H:i') }}</div>
-                                </div>
-                            </div>
-                        @endfor
+                        <div class="text-center p-4 text-muted">
+                            Belum ada aktivitas terbaru.
+                        </div>
                     @endforelse
                 </div>
             </div>
@@ -234,32 +223,17 @@
             <div class="card-header">
                 <div class="card-title">
                     <div class="card-title-icon">
-                        <i data-lucide="pie-chart" style="width: 16px; height: 16px;"></i>
+                        <i data-lucide="map" style="width: 16px; height: 16px;"></i>
                     </div>
-                    Sebaran Peserta
+                    Top 5 Provinsi (Sebaran Massa)
                 </div>
-                <select class="form-input" style="width: auto; padding: 8px 12px; font-size: 12px;">
-                    <option>Bulan Ini</option>
-                    <option>Tahun Ini</option>
-                </select>
             </div>
             <div class="card-body">
                 <div style="height: 240px;">
                     <canvas id="distributionChart"></canvas>
                 </div>
-                <div style="display: flex; justify-content: center; gap: 24px; margin-top: 20px;">
-                    <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
-                        <span style="width: 12px; height: 12px; background: var(--primary); border-radius: 3px;"></span>
-                        Terkonfirmasi
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
-                        <span style="width: 12px; height: 12px; background: var(--success); border-radius: 3px;"></span>
-                        Hadir
-                    </div>
-                    <div style="display: flex; align-items: center; gap: 8px; font-size: 13px;">
-                        <span style="width: 12px; height: 12px; background: var(--warning); border-radius: 3px;"></span>
-                        Pending
-                    </div>
+                <div class="text-center mt-3 text-muted" style="font-size: 12px;">
+                    Menampilkan 5 provinsi dengan jumlah massa terbanyak.
                 </div>
             </div>
         </div>
@@ -300,6 +274,10 @@
 
 @push('scripts')
 <script>
+    // Data Injection
+    const trends = @json($trends);
+    const demographics = @json($demographics);
+
     // Registration Trend Chart
     const trendCtx = document.getElementById('trendChart').getContext('2d');
     const trendGradient = trendCtx.createLinearGradient(0, 0, 0, 300);
@@ -313,11 +291,11 @@
     new Chart(trendCtx, {
         type: 'line',
         data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+            labels: trends.labels,
             datasets: [
                 {
                     label: 'Registrasi',
-                    data: [150, 230, 180, 320, 280, 450, 520],
+                    data: trends.registrations,
                     borderColor: '#DC2626',
                     backgroundColor: trendGradient,
                     borderWidth: 3,
@@ -331,7 +309,7 @@
                 },
                 {
                     label: 'Check-in',
-                    data: [120, 180, 150, 280, 240, 380, 450],
+                    data: trends.checkins,
                     borderColor: '#10B981',
                     backgroundColor: successGradient,
                     borderWidth: 3,
@@ -372,6 +350,7 @@
                     }
                 },
                 y: {
+                    beginAtZero: true,
                     grid: {
                         color: '#F3F4F6'
                     },
@@ -393,21 +372,14 @@
     new Chart(distCtx, {
         type: 'bar',
         data: {
-            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            labels: demographics.labels,
             datasets: [
                 {
-                    label: 'Terkonfirmasi',
-                    data: [120, 150, 180, 220, 280, 320],
+                    label: 'Jumlah Massa',
+                    data: demographics.data,
                     backgroundColor: '#DC2626',
                     borderRadius: 6,
-                    barThickness: 16,
-                },
-                {
-                    label: 'Hadir',
-                    data: [100, 130, 160, 200, 250, 290],
-                    backgroundColor: '#10B981',
-                    borderRadius: 6,
-                    barThickness: 16,
+                    barThickness: 20,
                 }
             ]
         },
@@ -418,6 +390,10 @@
                 legend: {
                     display: false
                 },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                }
             },
             scales: {
                 x: {
@@ -426,10 +402,13 @@
                     },
                     ticks: {
                         color: '#9CA3AF',
-                        font: { size: 12 }
+                        font: { size: 12 },
+                        maxRotation: 45,
+                        minRotation: 0
                     }
                 },
                 y: {
+                    beginAtZero: true,
                     grid: {
                         color: '#F3F4F6'
                     },

@@ -72,15 +72,16 @@ class SecurityHeaders
     {
         $policies = [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com",
-            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
-            "img-src 'self' data: https: blob:",
-            "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net",
-            "connect-src 'self' https://nominatim.openstreetmap.org https://*.tile.openstreetmap.org",
-            "frame-src 'self'",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://unpkg.com https://cdnjs.cloudflare.com",
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com https://unpkg.com https://cdnjs.cloudflare.com",
+            "img-src 'self' data: https: blob: *",
+            "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+            "connect-src 'self' https: wss:",
+            "frame-src 'self' https:",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",
+            "media-src 'self' blob: data:",
         ];
 
         return implode('; ', $policies);

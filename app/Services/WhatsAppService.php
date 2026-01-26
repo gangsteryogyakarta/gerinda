@@ -398,17 +398,29 @@ class WhatsAppService
             
             if ($check->successful()) {
                 $data = $check->json();
-                // If session exists but stopped, start it
-                if (($data['status'] ?? '') === 'STOPPED') {
+                $status = $data['status'] ?? 'STOPPED';
+
+                // If session is STOPPED or Stuck (STARTING/FAILED), force start/restart
+                if (in_array($status, ['STOPPED', 'STARTING', 'FAILED'])) {
+                    
+                    // If not stopped, stop it first to ensure clean start
+                    if ($status !== 'STOPPED') {
+                        Http::withHeaders(['X-Api-Key' => $this->token])
+                            ->post($this->baseUrl . '/api/sessions/' . $session . '/stop');
+                    }
+
+                    // Start Session
                     $response = Http::withHeaders(['X-Api-Key' => $this->token])
-                        ->post($this->baseUrl . '/api/' . $session . '/start');
+                        ->post($this->baseUrl . '/api/sessions/' . $session . '/start');
+                        
                     return [
                         'success' => $response->successful(),
                         'message' => 'Session started',
                         'data' => $response->json(),
                     ];
                 }
-                return ['success' => true, 'message' => 'Session already running or starting'];
+                
+                return ['success' => true, 'message' => 'Session already running'];
             } elseif ($check->status() === 404) {
                 // 2. Session does not exist, create it
                 $create = Http::withHeaders(['X-Api-Key' => $this->token])
@@ -428,9 +440,9 @@ class WhatsAppService
                 ];
             }
 
-            // Fallback: try to start blindly (legacy behavior)
+            // Fallback (Legacy)
             $response = Http::withHeaders(['X-Api-Key' => $this->token])
-                ->post($this->baseUrl . '/api/' . $session . '/start');
+                ->post($this->baseUrl . '/api/sessions/' . $session . '/start');
             return [
                 'success' => $response->successful(),
                 'data' => $response->json(),
@@ -456,7 +468,7 @@ class WhatsAppService
                 $session = config('services.waha.session', 'default');
                 $response = Http::timeout(10)
                     ->withHeaders(['X-Api-Key' => $this->token])
-                    ->post($this->baseUrl . '/api/' . $session . '/stop');
+                    ->post($this->baseUrl . '/api/sessions/' . $session . '/stop');
                     
                 return [
                     'success' => $response->successful(),

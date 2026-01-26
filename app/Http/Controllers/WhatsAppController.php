@@ -6,6 +6,7 @@ use App\Services\WhatsAppService;
 use App\Services\WhatsAppRateLimiter;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use App\Models\Event;
 
 class WhatsAppController extends Controller
 {
@@ -25,11 +26,13 @@ class WhatsAppController extends Controller
     {
         $status = $this->whatsapp->checkStatus();
         $provider = $this->whatsapp->getProviderInfo();
+        $events = Event::latest()->get();
         
         return view('whatsapp.index', [
             'status' => $status,
             'provider' => $provider,
             'isConnected' => $status['connected'] ?? false,
+            'events' => $events,
         ]);
     }
 
@@ -273,7 +276,8 @@ class WhatsAppController extends Controller
     {
         $validated = $request->validate([
             'message' => 'required|string|max:4096',
-            'status' => 'nullable|in:all,confirmed,pending',
+            'status' => 'nullable|in:all,confirmed,pending,checked_in',
+            'image_url' => 'nullable|url',
         ]);
 
         $query = \App\Models\EventRegistration::query()
@@ -284,7 +288,11 @@ class WhatsAppController extends Controller
             ->with('massa:id,no_hp,nama_lengkap');
 
         if (isset($validated['status']) && $validated['status'] !== 'all') {
-            $query->where('registration_status', $validated['status']);
+            if ($validated['status'] === 'checked_in') {
+                $query->where('attendance_status', 'checked_in');
+            } else {
+                $query->where('registration_status', $validated['status']);
+            }
         }
 
         $registrations = $query->get();
@@ -292,7 +300,7 @@ class WhatsAppController extends Controller
         if ($registrations->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'No registrants found.',
+                'message' => 'No registrants found matching criteria.',
             ]);
         }
 
@@ -310,7 +318,16 @@ class WhatsAppController extends Controller
 
         // Dispatch job
         $batchId = uniqid('event_');
-        \App\Jobs\BulkWhatsAppJob::dispatch($phones, $validated['message'], $batchId);
+        
+        if (!empty($validated['image_url'])) {
+             \App\Jobs\BulkImageWhatsAppJob::dispatch(
+                $phones,
+                $validated['image_url'],
+                $validated['message']
+             );
+        } else {
+             \App\Jobs\BulkWhatsAppJob::dispatch($phones, $validated['message'], $batchId);
+        }
         
         return response()->json([
             'success' => true,

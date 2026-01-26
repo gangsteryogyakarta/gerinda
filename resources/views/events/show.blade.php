@@ -512,12 +512,71 @@
 <script>
     function copyLink() {
         var copyText = document.getElementById("shareLink");
-        copyText.select();
-        copyText.setSelectionRange(0, 99999); // For mobile devices
-        navigator.clipboard.writeText(copyText.value);
+        var text = copyText.value;
         
-        // Optional: Show tooltip or toast
-        alert("Link berhasil disalin!");
+        // Modern Clipboard API with fallback
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(function() {
+                showToast('Link berhasil disalin!', 'success');
+            }).catch(function(err) {
+                fallbackCopy(copyText);
+            });
+        } else {
+            fallbackCopy(copyText);
+        }
     }
+    
+    function fallbackCopy(element) {
+        element.select();
+        element.setSelectionRange(0, 99999);
+        try {
+            document.execCommand('copy');
+            showToast('Link berhasil disalin!', 'success');
+        } catch (err) {
+            showToast('Gagal menyalin link. Silakan salin manual.', 'error');
+        }
+    }
+    
+    function showToast(message, type = 'success') {
+        // Remove existing toast
+        var existingToast = document.querySelector('.copy-toast');
+        if (existingToast) existingToast.remove();
+        
+        var toast = document.createElement('div');
+        toast.className = 'copy-toast';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 12px 24px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+            background: ${type === 'success' ? '#10B981' : '#EF4444'};
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(function() {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100px)';
+            toast.style.transition = 'all 0.3s ease';
+            setTimeout(function() { toast.remove(); }, 300);
+        }, 3000);
+    }
+    
+    // Add animation keyframes
+    var style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+    `;
+    document.head.appendChild(style);
 </script>
 @endpush

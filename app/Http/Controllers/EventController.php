@@ -7,6 +7,7 @@ use App\Models\EventCategory;
 use App\Models\Province;
 use App\Services\RegistrationService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class EventController extends Controller
 {
@@ -263,23 +264,30 @@ class EventController extends Controller
     {
         $results = $this->registrationService->batchGenerateTickets($event);
 
-        return back()->with('success', "Berhasil generate {$results['success']} tiket, {$results['failed']} gagal.");
+        if ($results['success'] > 0) {
+            // Redirect to print tickets page for immediate download
+            return redirect()->route('events.print-tickets', $event)
+                ->with('success', "Berhasil generate {$results['success']} tiket, {$results['failed']} gagal. PDF sedang diunduh...");
+        }
+
+        return back()->with('info', "Tidak ada tiket yang perlu di-generate. Total registrasi: {$results['total']}");
     }
+    
     /**
      * Print all tickets for an event.
      */
     public function printAllTickets(Event $event)
     {
-        // Get all confirmed registrations with ticket numbers
+        // Get all registrations with ticket numbers (not just confirmed)
         $registrations = $event->registrations()
-            ->confirmed()
+            ->whereIn('registration_status', ['confirmed', 'pending', 'waitlist'])
             ->whereNotNull('ticket_number')
             ->orderBy('id')
             ->with('massa')
             ->get();
 
         if ($registrations->isEmpty()) {
-            return back()->with('error', 'Belum ada tiket yang terkonfirmasi untuk event ini.');
+            return back()->with('error', 'Belum ada tiket yang dibuat untuk event ini. Silakan klik "Generate Tiket" terlebih dahulu.');
         }
 
         // Prepare QR Codes and Logo
@@ -308,6 +316,7 @@ class EventController extends Controller
         
         $pdf->setPaper('a4', 'portrait');
 
-        return $pdf->stream("tickets-event-{$event->code}.pdf");
+        // Use download instead of stream for automatic download
+        return $pdf->download("tickets-event-{$event->code}.pdf");
     }
 }

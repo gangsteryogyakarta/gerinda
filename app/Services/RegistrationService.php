@@ -138,22 +138,37 @@ class RegistrationService
 
     /**
      * Batch generate tickets for an event
+     * Now generates for ALL registrations (confirmed, pending, waitlist)
+     * and regenerates if requested
      */
-    public function batchGenerateTickets(Event $event): array
+    public function batchGenerateTickets(Event $event, bool $regenerate = true): array
     {
-        $registrations = $event->registrations()
-            ->confirmed()
-            ->whereNull('qr_code_path')
-            ->get();
+        // Get all registrations that need tickets
+        $query = $event->registrations()
+            ->whereIn('registration_status', ['confirmed', 'pending', 'waitlist']);
+        
+        // If not regenerating, only get those without QR code
+        if (!$regenerate) {
+            $query->whereNull('qr_code_path');
+        }
+        
+        $registrations = $query->get();
 
-        $results = ['success' => 0, 'failed' => 0];
+        $results = ['success' => 0, 'failed' => 0, 'total' => $registrations->count()];
 
         foreach ($registrations as $registration) {
             try {
+                // Ensure ticket number exists
+                if (empty($registration->ticket_number)) {
+                    $registration->ticket_number = $this->generateTicketNumber($event);
+                    $registration->save();
+                }
+                
                 $this->generateQrCode($registration);
                 $this->generateTicketPdf($registration);
                 $results['success']++;
             } catch (\Exception $e) {
+                \Log::error('Ticket generation failed for registration ' . $registration->id . ': ' . $e->getMessage());
                 $results['failed']++;
             }
         }
