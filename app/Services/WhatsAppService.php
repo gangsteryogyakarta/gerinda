@@ -390,9 +390,9 @@ class WhatsAppService
     public function startSession(): array
     {
         if ($this->provider === 'waha') {
-            $session = config('services.waha.session', 'default');
+            $session = config('services.waha.session', 'gerindra');
             
-            // Check if session exists first
+            // 1. Check if session exists
             $check = Http::withHeaders(['X-Api-Key' => $this->token])
                 ->get($this->baseUrl . '/api/sessions/' . $session);
             
@@ -408,10 +408,27 @@ class WhatsAppService
                         'data' => $response->json(),
                     ];
                 }
-                return ['success' => true, 'message' => 'Session already running'];
+                return ['success' => true, 'message' => 'Session already running or starting'];
+            } elseif ($check->status() === 404) {
+                // 2. Session does not exist, create it
+                $create = Http::withHeaders(['X-Api-Key' => $this->token])
+                    ->post($this->baseUrl . '/api/sessions', [
+                        'name' => $session,
+                        'config' => [
+                            'webhooks' => [
+                                ['url' => config('app.url') . '/api/webhooks/whatsapp', 'events' => ['message', 'message.ack']]
+                            ]
+                        ]
+                    ]);
+                    
+                return [
+                    'success' => $create->successful(),
+                    'message' => $create->successful() ? 'Session created and started' : 'Failed to create session',
+                    'data' => $create->json(),
+                ];
             }
 
-            // For WAHA Core, default session already exists, just start it
+            // Fallback: try to start blindly (legacy behavior)
             $response = Http::withHeaders(['X-Api-Key' => $this->token])
                 ->post($this->baseUrl . '/api/' . $session . '/start');
             return [
