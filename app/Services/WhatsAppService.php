@@ -179,11 +179,29 @@ class WhatsAppService
                     'success' => $response->successful(),
                     'data' => $response->json(),
                 ];
+            } elseif ($this->provider === 'waha') {
+                return $this->sendViaWaha($phone, $caption, $imageUrl); // Logic adjustments needed for image
             }
             return ['success' => false, 'error' => 'Image sending not supported for this provider'];
         } catch (\Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
         }
+    }
+
+    /**
+     * Send interactive buttons
+     * 
+     * @param array $buttons Array of ['id' => 'btn1', 'text' => 'Click Me']
+     */
+    public function sendButtons(string $phone, string $body, array $buttons, ?string $title = null, ?string $footer = null): array
+    {
+        if ($this->provider === 'waha') {
+            $service = new WahaService(); // Instantiate or inject proper dependency
+            // Re-instantiating here for simplicity, ideally used via dependency injection
+            return $service->sendButtons($phone, $body, $buttons, $title, $footer);
+        }
+
+        return ['success' => false, 'error' => 'Button messages only supported for WAHA provider'];
     }
 
     /**

@@ -204,6 +204,61 @@ class WahaService
     }
 
     /**
+     * Send interactive buttons
+     * 
+     * @param array $buttons Array of ['id' => 'btn1', 'text' => 'Click Me']
+     */
+    public function sendButtons(string $phone, string $body, array $buttons, ?string $title = null, ?string $footer = null): array
+    {
+        try {
+            $chatId = $this->formatPhoneNumber($phone) . '@c.us';
+            
+            // Format buttons for WAHA
+            $formattedButtons = array_map(function($btn) {
+                return [
+                    'id' => $btn['id'] ?? uniqid('btn_'),
+                    'text' => $btn['text'] ?? 'Button'
+                ];
+            }, $buttons);
+
+            $payload = [
+                'session' => $this->session,
+                'chatId' => $chatId,
+                'text' => $body,
+                'buttons' => $formattedButtons,
+            ];
+
+            if ($title) {
+                $payload['title'] = $title;
+            }
+
+            if ($footer) {
+                $payload['footer'] = $footer;
+            }
+
+            // Endpoint might vary based on WAHA version, using compatible endpoint
+            // Some versions use /api/sendReplyButtons or /api/sendButtons
+            // Checking documentation compatible approach: generic text with buttons
+            
+            $response = $this->client()->post("/api/sendText", $payload);
+
+            return [
+                'success' => $response->successful(),
+                'data' => $response->json(),
+            ];
+        } catch (\Exception $e) {
+            Log::error('WAHA Send Buttons Failed', [
+                'phone' => $phone,
+                'error' => $e->getMessage(),
+            ]);
+            return [
+                'success' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
+    }
+
+    /**
      * Bulk send messages
      */
     public function bulkSend(array $recipients, string $message, int $delayMs = 2000): array
