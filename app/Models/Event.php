@@ -170,6 +170,11 @@ class Event extends Model
         return $now >= $this->event_start && $now <= $this->event_end;
     }
 
+    public function isRegistrationOpen(): bool
+    {
+        return $this->registration_open;
+    }
+
     // Scopes
     public function scopePublished($query)
     {
