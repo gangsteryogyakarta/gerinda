@@ -320,7 +320,13 @@
             <div class="success-body">
                 <div class="registration-number">
                     <div class="registration-number-label">Nomor Registrasi</div>
-                    <div class="registration-number-value">{{ $registration->registration_code }}</div>
+                    <div class="registration-number-value">{{ $registration->ticket_number }}</div>
+                    
+                    @if($registration->qr_code_path)
+                        <div style="margin-top: 1.5rem; display: flex; justify-content: center;">
+                            <img src="{{ asset('storage/' . $registration->qr_code_path) }}" alt="QR Code" style="width: 150px; height: 150px; border: 4px solid white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                        </div>
+                    @endif
                 </div>
 
                 <div class="event-info">
