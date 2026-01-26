@@ -22,7 +22,7 @@ class RegistrationService
     /**
      * Register massa to an event
      */
-    public function register(Event $event, array $massaData, array $customFields = [], ?int $registeredBy = null): EventRegistration
+    public function register(Event $event, Massa|array $massaOrData, array $customFields = [], ?int $registeredBy = null): EventRegistration
     {
         // Check if event can accept registrations
         if (!$event->canRegister()) {
@@ -30,7 +30,7 @@ class RegistrationService
         }
 
         // Find or create massa (deduplication by NIK)
-        $massa = $this->massaService->findOrCreateByNik($massaData);
+        $massa = $massaOrData instanceof Massa ? $massaOrData : $this->massaService->findOrCreateByNik($massaOrData);
 
         // Check if already registered
         $existing = EventRegistration::where('event_id', $event->id)
