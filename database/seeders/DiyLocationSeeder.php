@@ -20,6 +20,40 @@ class DiyLocationSeeder extends Seeder
         DB::beginTransaction();
 
         try {
+            // Clear existing DIY data to ensure fresh accurate data
+            $this->command->info("Clearing existing DIY location data...");
+            
+            // Get DIY province
+            $diyProvince = Province::where('code', '34')->first();
+            
+            if ($diyProvince) {
+                // Delete villages first (child tables)
+                DB::table('villages')
+                    ->whereIn('district_id', function($q) use ($diyProvince) {
+                        $q->select('id')->from('districts')
+                            ->whereIn('regency_id', function($q2) use ($diyProvince) {
+                                $q2->select('id')->from('regencies')
+                                    ->where('province_id', $diyProvince->id);
+                            });
+                    })
+                    ->delete();
+                
+                // Delete districts
+                DB::table('districts')
+                    ->whereIn('regency_id', function($q) use ($diyProvince) {
+                        $q->select('id')->from('regencies')
+                            ->where('province_id', $diyProvince->id);
+                    })
+                    ->delete();
+                
+                // Delete regencies
+                DB::table('regencies')
+                    ->where('province_id', $diyProvince->id)
+                    ->delete();
+                
+                $this->command->info("Existing DIY data cleared.");
+            }
+
             // 1. Create Province: DI YOGYAKARTA
             $province = Province::updateOrCreate(
                 ['code' => '34'],
@@ -54,35 +88,15 @@ class DiyLocationSeeder extends Seeder
 
                     $villCounter = 1001;
                     foreach ($villages as $villName => $postalCode) {
-                        // Check if village exists
-                        $village = Village::where('district_id', $district->id)
-                            ->where('name', $villName)
-                            ->first();
-
-                        if ($village) {
-                            // Only update postal_code, keep existing code
-                            $village->update(['postal_code' => $postalCode]);
-                        } else {
-                            // Create new village with unique code  
-                            $villCode = $distCode . str_pad($villCounter, 4, '0', STR_PAD_LEFT);
-                            
-                            // Check if code exists, if so generate unique one
-                            $maxRetries = 10;
-                            $retry = 0;
-                            while (Village::where('code', $villCode)->exists() && $retry < $maxRetries) {
-                                $villCounter++;
-                                $villCode = $distCode . str_pad($villCounter, 4, '0', STR_PAD_LEFT);
-                                $retry++;
-                            }
-                            
-                            Village::create([
-                                'district_id' => $district->id,
-                                'name' => $villName,
-                                'code' => $villCode,
-                                'postal_code' => $postalCode
-                            ]);
-                            $villCounter++;
-                        }
+                        $villCode = $distCode . str_pad($villCounter, 4, '0', STR_PAD_LEFT);
+                        $villCounter++;
+                        
+                        Village::create([
+                            'district_id' => $district->id,
+                            'name' => $villName,
+                            'code' => $villCode,
+                            'postal_code' => $postalCode
+                        ]);
                     }
                 }
             }
