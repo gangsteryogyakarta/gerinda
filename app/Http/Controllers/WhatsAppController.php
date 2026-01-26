@@ -95,9 +95,14 @@ class WhatsAppController extends Controller
         $validated = $request->validate([
             'phone' => 'required|string',
             'message' => 'required|string|max:4096',
+            'image_url' => 'nullable|url',
         ]);
 
-        $result = $this->whatsapp->sendText($validated['phone'], $validated['message']);
+        if (!empty($validated['image_url'])) {
+            $result = $this->whatsapp->sendImage($validated['phone'], $validated['image_url'], $validated['message']);
+        } else {
+            $result = $this->whatsapp->sendText($validated['phone'], $validated['message']);
+        }
         
         return response()->json($result);
     }
@@ -177,6 +182,7 @@ class WhatsAppController extends Controller
             'age_min' => 'nullable|integer|min:17|max:100',
             'age_max' => 'nullable|integer|min:17|max:100',
             'limit' => 'nullable|integer|min:1|max:1000',
+            'image_url' => 'nullable|url',
         ]);
 
         // Build query based on filter
@@ -238,9 +244,18 @@ class WhatsAppController extends Controller
             ], 429);
         }
 
-        // Dispatch job (no delay parameter - uses config)
+        // Dispatch job
         $batchId = uniqid('massa_');
-        \App\Jobs\BulkWhatsAppJob::dispatch($phones, $validated['message'], $batchId);
+
+        if (!empty($validated['image_url'])) {
+             \App\Jobs\BulkImageWhatsAppJob::dispatch(
+                $phones,
+                $validated['image_url'],
+                $validated['message']
+             );
+        } else {
+             \App\Jobs\BulkWhatsAppJob::dispatch($phones, $validated['message'], $batchId);
+        }
         
         return response()->json([
             'success' => true,
