@@ -172,6 +172,10 @@ class WhatsAppController extends Controller
             'message' => 'required|string|max:4096',
             'filter' => 'nullable|in:all,active,province',
             'province_id' => 'nullable|integer|exists:provinces,id',
+            'regency_id' => 'nullable|integer|exists:regencies,id',
+            'gender' => 'nullable|in:L,P',
+            'age_min' => 'nullable|integer|min:17|max:100',
+            'age_max' => 'nullable|integer|min:17|max:100',
             'limit' => 'nullable|integer|min:1|max:1000',
         ]);
 
@@ -186,6 +190,29 @@ class WhatsAppController extends Controller
 
         if (($validated['filter'] ?? null) === 'province' && isset($validated['province_id'])) {
             $query->where('province_id', $validated['province_id']);
+        }
+
+        // Advanced demographic filters
+        if (!empty($validated['regency_id'])) {
+            $query->where('regency_id', $validated['regency_id']);
+        }
+
+        if (!empty($validated['gender'])) {
+            $query->where('jenis_kelamin', $validated['gender']);
+        }
+
+        if (!empty($validated['age_min']) || !empty($validated['age_max'])) {
+            $query->whereNotNull('tanggal_lahir');
+            
+            if (!empty($validated['age_min'])) {
+                $maxDate = now()->subYears($validated['age_min'])->format('Y-m-d');
+                $query->where('tanggal_lahir', '<=', $maxDate);
+            }
+            
+            if (!empty($validated['age_max'])) {
+                $minDate = now()->subYears($validated['age_max'] + 1)->format('Y-m-d');
+                $query->where('tanggal_lahir', '>', $minDate);
+            }
         }
 
         if (isset($validated['limit'])) {

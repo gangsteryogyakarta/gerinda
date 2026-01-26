@@ -171,6 +171,40 @@
                                     <input type="number" id="bulk-limit" placeholder="1000" min="1" max="1000">
                                 </div>
                             </div>
+                            
+                            <!-- Advanced Segmentation -->
+                            <details class="segmentation-details">
+                                <summary><i class="fas fa-sliders-h"></i> Filter Demografi (Opsional)</summary>
+                                <div class="segmentation-content">
+                                    <div class="form-row two-cols">
+                                        <div class="form-group">
+                                            <label><i class="fas fa-venus-mars"></i> Jenis Kelamin</label>
+                                            <select id="bulk-gender">
+                                                <option value="">Semua</option>
+                                                <option value="L">Laki-laki</option>
+                                                <option value="P">Perempuan</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><i class="fas fa-city"></i> Kabupaten/Kota</label>
+                                            <select id="bulk-regency">
+                                                <option value="">Semua</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-row two-cols">
+                                        <div class="form-group">
+                                            <label><i class="fas fa-calendar-alt"></i> Usia Min</label>
+                                            <input type="number" id="bulk-age-min" placeholder="17" min="17" max="100">
+                                        </div>
+                                        <div class="form-group">
+                                            <label><i class="fas fa-calendar-alt"></i> Usia Max</label>
+                                            <input type="number" id="bulk-age-max" placeholder="60" min="17" max="100">
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+
                             <div class="form-group">
                                 <label><i class="fas fa-comment-dots"></i> Pesan Blast</label>
                                 <textarea id="bulk-message" rows="4" placeholder="Gunakan {nama} untuk personalisasi" required maxlength="4096"></textarea>
@@ -1168,6 +1202,36 @@
         margin-left: 320px !important; /* 280px sidebar + 40px gap */
     }
 }
+
+/* === Segmentation Details === */
+.segmentation-details {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+}
+
+.segmentation-details summary {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--gray-600);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.segmentation-details summary:hover {
+    color: var(--primary);
+}
+
+.segmentation-details[open] summary {
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.segmentation-content {
+    padding: 1rem;
+}
 </style>
 @endpush
 
@@ -1357,6 +1421,20 @@ function loadEvents() {
     .catch(e => console.error('Load Events Error:', e));
 }
 
+function loadRegencies() {
+    // Load regencies for DIY by default (province_id = 34)
+    fetch('/api/v1/locations/regencies?province_id=34')
+        .then(r => r.json())
+        .then(data => {
+            const select = document.getElementById('bulk-regency');
+            const items = Array.isArray(data) ? data : (data.data || []);
+            if (select) {
+                items.forEach(r => select.innerHTML += `<option value="${r.id}">${r.name}</option>`);
+            }
+        })
+        .catch(e => console.error('Load Regencies Error:', e));
+}
+
 function setupCharCounters() {
     ['single', 'bulk', 'event'].forEach(prefix => {
         const textarea = document.getElementById(`${prefix}-message`);
@@ -1380,7 +1458,16 @@ function setupFormHandlers() {
             if (formId === 'single-message-form') {
                 payload = { phone: document.getElementById('single-phone').value, message: document.getElementById('single-message').value };
             } else if (formId === 'bulk-message-form') {
-                payload = { filter: document.getElementById('bulk-filter').value, province_id: document.getElementById('bulk-province').value, limit: document.getElementById('bulk-limit').value, message: document.getElementById('bulk-message').value };
+                payload = { 
+                    filter: document.getElementById('bulk-filter').value, 
+                    province_id: document.getElementById('bulk-province').value, 
+                    regency_id: document.getElementById('bulk-regency')?.value || '',
+                    gender: document.getElementById('bulk-gender')?.value || '',
+                    age_min: document.getElementById('bulk-age-min')?.value || '',
+                    age_max: document.getElementById('bulk-age-max')?.value || '',
+                    limit: document.getElementById('bulk-limit').value, 
+                    message: document.getElementById('bulk-message').value 
+                };
             } else if (formId === 'event-message-form') {
                 const eventId = document.getElementById('event-select').value;
                 payload = { status: document.getElementById('event-status').value, message: document.getElementById('event-message').value };
