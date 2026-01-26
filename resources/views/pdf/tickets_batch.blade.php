@@ -2,167 +2,302 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Batch Tickets - {{ $event->name }}</title>
+    <title>Tickets - {{ $event->name }}</title>
     <style>
         @page {
             margin: 0;
-            size: A4;
+            size: A4 portrait;
         }
         
         body {
-            font-family: 'DejaVu Sans', sans-serif;
+            font-family: 'Calibri', sans-serif;
             margin: 0;
             padding: 0;
             background: #fff;
+            color: #D80000;
         }
 
+        .page-container {
+            width: 200mm;
+            height: 285mm;
+            position: absolute;
+            top: 6mm;
+            left: 5mm;
+        }
+        
         .page-break {
             page-break-after: always;
         }
-        
-        .grid-container {
+
+        .ticket-wrapper {
             width: 100%;
-            padding: 10mm;
+            height: 57mm;
+            position: relative;
             box-sizing: border-box;
         }
 
-        .ticket-wrapper {
-            width: 48%; /* Display 2 per row with some gap */
-            display: inline-block;
-            vertical-align: top;
-            margin-bottom: 5mm;
-            margin-right: 2%;
+        /* Cutting guide - Red Dashed line */
+        .cut-line {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            border-bottom: 2px dashed #D80000;
+            opacity: 0.3;
+            z-index: 10;
         }
-
-        .ticket-wrapper:nth-child(2n) {
-            margin-right: 0;
+        
+        .ticket-wrapper:last-child .cut-line {
+            display: none;
         }
 
         .ticket {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
+            width: 100%;
+            height: 55mm;
+            display: table;
             background: #fff;
-            page-break-inside: avoid;
+            position: relative;
+            overflow: hidden;
         }
         
-        .ticket-header {
-            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        /* Main Section (Left - 72%) - PASTEL RED BACKGROUND */
+        .main-section {
+            display: table-cell;
+            width: 72%;
+            vertical-align: middle;
+            background-color: #ef4444; /* Fallback Solid Pastel Red */
+            background-image: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: white;
-            padding: 8px;
-            text-align: center;
+            position: relative;
+            padding: 10px 15px;
+            border-right: 4px dotted #f3f4f6;
         }
         
-        .ticket-header img {
-            height: 30px; 
-            margin-bottom: 2px;
+        /* Stub Section (Right - 28%) - LIGHT GRAY BACKGROUND */
+        .stub-section {
+            display: table-cell;
+            width: 28%;
+            vertical-align: middle;
+            background-color: #f3f4f6 !important; /* Force Light Gray */
+            padding: 10px;
+            text-align: center;
+            color: #D80000;
+        }
+        
+        /* Large Semi-Circle Cutouts for separation */
+        .tear-circle-top {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            width: 20px;
+            height: 20px;
+            background-color: #fff;
+            border-radius: 50%;
+            z-index: 5;
+        }
+        
+        .tear-circle-bottom {
+            position: absolute;
+            bottom: -10px;
+            right: -10px;
+            width: 20px;
+            height: 20px;
+            background-color: #fff;
+            border-radius: 50%;
+            z-index: 5;
+        }
+
+        /* LOGO STYLING - EXTRA LARGE */
+        .header-logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .logo-box {
+            background: white;
+            padding: 8px;
+            border-radius: 8px;
+            display: inline-block;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .logo-img {
+            height: 60px;
+            width: auto;
             vertical-align: middle;
         }
         
-        .party-name {
-            font-size: 8px;
-            opacity: 0.9;
+        .party-title {
+            font-size: 26px; /* Slightly larger */
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-left: 15px;
+            line-height: 1;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            font-family: 'Calibri', 'Arial Black', sans-serif;
+        }
+
+        /* EVENT CONTENT */
+        .event-title {
+            font-size: 30px; /* Larger for better visibility */
+            font-weight: 900;
+            text-transform: uppercase;
+            line-height: 0.9;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            font-family: 'Calibri', 'Arial Black', sans-serif;
         }
         
-        .event-name {
-            background: #1f2937;
-            color: white;
+        .event-info-grid {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .event-info-grid td {
+            vertical-align: top;
+            padding-right: 15px;
+        }
+        
+        .info-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            opacity: 0.9;
+            font-weight: bold;
+            display: block;
+            margin-bottom: 2px;
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .info-value {
+            font-size: 15px;
+            font-weight: bold;
+            text-transform: uppercase;
+            line-height: 1.1;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        /* STUB CONTENT */
+        .qr-box {
+            border: 4px solid #D80000;
             padding: 5px;
-            text-align: center;
+            display: inline-block;
+            margin-bottom: 5px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .qr-img {
+            width: 85px;
+            height: 85px;
+            display: block;
+        }
+        
+        .stub-label {
             font-size: 9px;
             font-weight: bold;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        
-        .ticket-body {
-            padding: 10px;
-            text-align: center;
-        }
-        
-        .qr-code img {
-            width: 80px;
-            height: 80px;
-        }
-
-        .ticket-number {
-            font-family: monospace;
-            font-size: 10px;
-            color: #6b7280;
+            color: #D80000;
+            opacity: 0.8;
             margin-top: 5px;
-            letter-spacing: 1px;
-            font-weight: bold;
         }
         
-        .attendee-name {
-            margin-top: 10px;
-            font-size: 12px;
-            font-weight: bold;
-            color: #dc2626;
-            margin-bottom: 2px;
-        }
-        
-        .attendee-nik {
-            font-size: 8px;
-            color: #6b7280;
+        .stub-value {
+            font-size: 13px;
+            font-weight: 800;
+            color: #D80000;
+            text-transform: uppercase;
+            line-height: 1.1;
         }
 
-        .event-details {
-            margin-top: 10px;
-            font-size: 8px;
-            color: #374151;
-            border-top: 1px dashed #eee;
-            padding-top: 8px;
-            text-align: left;
-        }
-
-        .detail-row {
-            margin-bottom: 2px;
-        }
-        
-        .detail-row span {
-            font-weight: 600;
+        /* Watermark - ADJUSTED FOR BETTER VISIBILITY */
+        .watermark {
+            position: absolute;
+            right: 10px;
+            bottom: 5px;
+            font-size: 110px;
+            font-weight: 900;
+            color: white;
+            opacity: 0.15; /* Increased opacity */
+            z-index: 0;
+            pointer-events: none;
+            line-height: 0.8;
+            transform: rotate(-5deg);
+            font-family: 'Arial Black', sans-serif; /* Keep heavy font for watermark */
         }
     </style>
 </head>
 <body>
-    @foreach($registrations->chunk(8) as $chunk)
-        <div class="grid-container {{ !$loop->last ? 'page-break' : '' }}">
+    @foreach($registrations->chunk(5) as $chunk)
+        <div class="page-container {{ !$loop->last ? 'page-break' : '' }}">
             @foreach($chunk as $registration)
                 <div class="ticket-wrapper">
+                    <div class="cut-line"></div>
                     <div class="ticket">
-                        <div class="ticket-header">
-                            @if(isset($logoBase64) && $logoBase64)
-                                <img src="{{ $logoBase64 }}" alt="Logo">
-                            @else
-                                <div style="font-weight:bold; font-size:12px;">TIKET</div>
-                            @endif
-                            <div class="party-name">Partai Gerindra</div>
+                        <!-- LEFT SIDE (PASTEL RED) -->
+                        <div class="main-section">
+                            <div class="tear-circle-top"></div>
+                            <div class="tear-circle-bottom"></div>
+                            
+                            <!-- Watermark Background -->
+                            <div class="watermark">GERINDRA</div>
+                            
+                            <table style="width: 100%; position: relative; z-index: 2;">
+                                <tr>
+                                    <td width="70px" style="vertical-align: middle;">
+                                        <div class="logo-box">
+                                            @if(isset($logoBase64) && $logoBase64)
+                                                <img src="{{ $logoBase64 }}" class="logo-img" alt="Logo">
+                                            @else
+                                                <div style="width:60px; height:60px; background:#D80000;"></div>
+                                            @endif
+                                        </div>
+                                    </td>
+                                    <td style="vertical-align: middle;">
+                                        <div class="party-title">PARTAI GERINDRA</div>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <div style="margin-top: 10px; position: relative; z-index: 2;">
+                                <div class="event-title">{{ Str::limit($event->name, 35) }}</div>
+                                
+                                <table class="event-info-grid">
+                                    <tr>
+                                        <td width="30%">
+                                            <span class="info-label">TANGGAL</span>
+                                            <div class="info-value">{{ $event->event_start->format('d M Y') }}</div>
+                                        </td>
+                                        <td width="20%">
+                                            <span class="info-label">WAKTU</span>
+                                            <div class="info-value">{{ $event->event_start->format('H:i') }} WIB</div>
+                                        </td>
+                                        <td width="50%">
+                                            <span class="info-label">LOKASI</span>
+                                            <div class="info-value">{{ Str::limit($event->venue_name, 25) }}</div>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
                         </div>
                         
-                        <div class="event-name">{{ $event->name }}</div>
-                        
-                        <div class="ticket-body">
-                            <div class="qr-code">
+                        <!-- RIGHT SIDE (LIGHT GRAY) -->
+                        <div class="stub-section">
+                            <div class="qr-box">
                                 @if(isset($qrCodes[$registration->id]))
-                                    <img src="{{ $qrCodes[$registration->id] }}" alt="QR">
-                                @else
-                                    <div style="width:80px;height:80px;background:#eee;margin:0 auto;"></div>
+                                    <img src="{{ $qrCodes[$registration->id] }}" class="qr-img" alt="QR">
                                 @endif
                             </div>
-                            <div class="ticket-number">{{ $registration->ticket_number }}</div>
                             
-                            <div class="attendee-name">{{ Str::limit($registration->massa->nama_lengkap, 20) }}</div>
-                            <div class="attendee-nik">{{ $registration->massa->nik }}</div>
-
-                            <div class="event-details">
-                                <div class="detail-row">
-                                    <span>Tgl:</span> {{ $event->event_start->format('d M Y') }}
-                                </div>
-                                <div class="detail-row">
-                                    <span>Lok:</span> {{ Str::limit($event->venue_name, 25) }}
-                                </div>
+                            <div>
+                                <span class="stub-label">NAMA PESERTA</span>
+                                <div class="stub-value" style="font-size: 14px;">{{ Str::limit($registration->massa->nama_lengkap, 15) }}</div>
+                            </div>
+                            
+                            <div style="margin-top: 5px;">
+                                <span class="stub-label">NO. TIKET</span>
+                                <div class="stub-value" style="font-family: 'Courier New', monospace;">{{ $registration->ticket_number }}</div>
                             </div>
                         </div>
                     </div>

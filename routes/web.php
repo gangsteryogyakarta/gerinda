@@ -62,8 +62,12 @@ Route::middleware(['auth'])->group(function () {
     })->name('registrations.download-ticket');
 
     // Massa
+    Route::get('/massa/export', [App\Http\Controllers\MassaController::class, 'export'])->name('massa.export');
+    Route::get('/massa/import', [App\Http\Controllers\MassaController::class, 'importForm'])->name('massa.import');
+    Route::post('/massa/import', [App\Http\Controllers\MassaController::class, 'importProcess'])->name('massa.import.process');
+    Route::get('/massa/template', [App\Http\Controllers\MassaController::class, 'downloadTemplate'])->name('massa.template');
+    Route::post('/massa/lookup-nik', [App\Http\Controllers\MassaController::class, 'lookupNik'])->name('massa.lookup-nik'); // Keep existing
     Route::resource('massa', App\Http\Controllers\MassaController::class);
-    Route::post('/massa/lookup-nik', [App\Http\Controllers\MassaController::class, 'lookupNik'])->name('massa.lookup-nik');
 
     // Maps (WebGIS)
     Route::get('/maps', [App\Http\Controllers\MapController::class, 'index'])->name('maps.index');

@@ -89,6 +89,18 @@
                             Reset
                         </a>
                     @endif
+
+                    <div style="flex: 1;"></div> 
+
+                    <a href="{{ route('massa.export', request()->all()) }}" class="btn btn-secondary" title="Export CSV sesuai filter">
+                        <i data-lucide="download"></i>
+                        Export
+                    </a>
+                    
+                    <a href="{{ route('massa.import') }}" class="btn btn-secondary" title="Import Data CSV">
+                        <i data-lucide="upload"></i>
+                        Import
+                    </a>
                 </div>
             </form>
         </div>
