@@ -331,4 +331,98 @@ class WhatsAppController extends Controller
             'last_result' => $lastResult,
         ]);
     }
+
+    /**
+     * List all campaigns
+     */
+    public function campaigns(): JsonResponse
+    {
+        $campaigns = \App\Models\WhatsappCampaign::orderBy('created_at', 'desc')
+            ->with('creator:id,name')
+            ->paginate(20);
+        
+        return response()->json($campaigns);
+    }
+
+    /**
+     * Store a new campaign
+     */
+    public function storeCampaign(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'message' => 'required|string|max:4096',
+            'scheduled_at' => 'required|date|after:now',
+            'filters' => 'nullable|array',
+            'filters.province_id' => 'nullable|integer',
+            'filters.regency_id' => 'nullable|integer',
+            'filters.gender' => 'nullable|in:L,P',
+            'filters.age_min' => 'nullable|integer|min:17',
+            'filters.age_max' => 'nullable|integer|max:100',
+        ]);
+
+        // Build query to get recipients
+        $query = \App\Models\Massa::query()
+            ->whereNotNull('no_hp')
+            ->where('no_hp', '!=', '');
+
+        $filters = $validated['filters'] ?? [];
+        
+        if (!empty($filters['province_id'])) {
+            $query->where('province_id', $filters['province_id']);
+        }
+        if (!empty($filters['regency_id'])) {
+            $query->where('regency_id', $filters['regency_id']);
+        }
+        if (!empty($filters['gender'])) {
+            $query->where('jenis_kelamin', $filters['gender']);
+        }
+        if (!empty($filters['age_min'])) {
+            $query->where('tanggal_lahir', '<=', now()->subYears($filters['age_min'])->format('Y-m-d'));
+        }
+        if (!empty($filters['age_max'])) {
+            $query->where('tanggal_lahir', '>', now()->subYears($filters['age_max'] + 1)->format('Y-m-d'));
+        }
+
+        $recipients = $query->pluck('no_hp')->toArray();
+
+        $campaign = \App\Models\WhatsappCampaign::create([
+            'name' => $validated['name'],
+            'message' => $validated['message'],
+            'scheduled_at' => $validated['scheduled_at'],
+            'filters' => $filters,
+            'recipients' => $recipients,
+            'recipient_count' => count($recipients),
+            'status' => 'scheduled',
+            'created_by' => auth()->id(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Campaign scheduled successfully',
+            'data' => $campaign,
+        ]);
+    }
+
+    /**
+     * Cancel a campaign
+     */
+    public function cancelCampaign(int $id): JsonResponse
+    {
+        $campaign = \App\Models\WhatsappCampaign::findOrFail($id);
+        
+        if (!in_array($campaign->status, ['draft', 'scheduled'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot cancel campaign in current status',
+            ], 400);
+        }
+
+        $campaign->update(['status' => 'cancelled']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Campaign cancelled',
+        ]);
+    }
 }

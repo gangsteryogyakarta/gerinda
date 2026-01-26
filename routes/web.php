@@ -101,6 +101,12 @@ Route::middleware(['auth'])->group(function () {
         // Rate limit and status endpoints
         Route::get('/rate-limit', [App\Http\Controllers\WhatsAppController::class, 'rateLimitStatus'])->name('whatsapp.rate-limit');
         Route::get('/blast-status', [App\Http\Controllers\WhatsAppController::class, 'blastStatus'])->name('whatsapp.blast-status');
+        
+        // Scheduled Campaigns
+        Route::get('/campaigns', [App\Http\Controllers\WhatsAppController::class, 'campaigns'])->name('whatsapp.campaigns');
+        Route::post('/campaigns', [App\Http\Controllers\WhatsAppController::class, 'storeCampaign'])->name('whatsapp.campaigns.store');
+        Route::post('/campaigns/{id}/cancel', [App\Http\Controllers\WhatsAppController::class, 'cancelCampaign'])->name('whatsapp.campaigns.cancel');
+        Route::post('/send-template', [App\Http\Controllers\WhatsAppController::class, 'sendTemplate'])->name('whatsapp.send-template');
     });
 });
 
