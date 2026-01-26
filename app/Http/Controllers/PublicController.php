@@ -46,9 +46,9 @@ class PublicController extends Controller
                 ->with('error', 'Pendaftaran untuk event ini sudah ditutup.');
         }
 
-        // Default to DI Yogyakarta
-        $provinces = Province::orderBy('name')->get();
-        $defaultProvince = Province::where('name', 'like', '%Yogyakarta%')->first();
+        // Limit to DI Yogyakarta
+        $provinces = Province::where('code', '34')->orderBy('name')->get();
+        $defaultProvince = $provinces->first();
         $regencies = $defaultProvince 
             ? Regency::where('province_id', $defaultProvince->id)->orderBy('name')->get()
             : collect();
@@ -232,7 +232,7 @@ class PublicController extends Controller
         
         $villages = Village::where('district_id', $districtId)
             ->orderBy('name')
-            ->get(['id', 'name']);
+            ->get(['id', 'name', 'postal_code']);
 
         return response()->json($villages);
     }

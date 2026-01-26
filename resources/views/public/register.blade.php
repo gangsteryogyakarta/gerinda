@@ -891,36 +891,6 @@
             }
         }
 
-        // Cascading Dropdowns Logic
-        const provinceSelect = document.getElementById('province_id');
-        const regencySelect = document.getElementById('regency_id');
-        const districtSelect = document.getElementById('district_id');
-        const villageSelect = document.getElementById('village_id');
-
-        // Helper to reset dropdowns
-        const resetDropdown = (el, placeholder) => {
-            el.innerHTML = `<option value="">${placeholder}</option>`;
-            el.disabled = true;
-        };
-        
-        // Enable dropdown
-        const enableDropdown = (el) => {
-            el.disabled = false;
-        };
-
-        // 1. Province -> Regency
-        provinceSelect.addEventListener('change', async function() {
-            const provinceId = this.value;
-            
-            // Reset children
-            resetDropdown(regencySelect, '-- Pilih Kabupaten/Kota --');
-            resetDropdown(districtSelect, '-- Pilih Kecamatan --');
-            resetDropdown(villageSelect, '-- Pilih Kelurahan/Desa --');
-            
-            if (!provinceId) return;
-
-            regencySelect.innerHTML = '<option value="">Memuat...</option>';
-            
 
 
         // Form submission
