@@ -1153,7 +1153,20 @@
     color: #007AFF; /* WhatsApp Blue */
     font-weight: 600;
     font-size: 0.95rem;
+    background: white;
+    padding: 0.75rem;
+    text-align: center;
+    color: #007AFF; /* WhatsApp Blue */
+    font-weight: 600;
+    font-size: 0.95rem;
     cursor: default;
+}
+
+/* Fix for Sidebar Overlap */
+@media (min-width: 769px) {
+    .main-content {
+        margin-left: 320px !important; /* 280px sidebar + 40px gap */
+    }
 }
 </style>
 @endpush
