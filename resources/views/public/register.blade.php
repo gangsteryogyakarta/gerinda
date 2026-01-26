@@ -777,6 +777,25 @@
                 </div>
             </div>
 
+            {{-- WhatsApp Consent --}}
+            <div class="form-section" style="background: #dcfce7; border: 1px solid #86efac;">
+                <div class="form-grid">
+                    <div class="form-group full-width" style="margin: 0;">
+                        <label style="display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer; font-size: 0.9375rem;">
+                            <input type="checkbox" name="wa_consent" id="wa_consent" value="1" checked
+                                style="width: 20px; height: 20px; margin-top: 2px; accent-color: #16a34a;">
+                            <span>
+                                <strong>📱 Terima notifikasi WhatsApp</strong><br>
+                                <span style="font-size: 0.8125rem; color: #166534;">
+                                    Saya bersedia menerima notifikasi WhatsApp berupa tiket dan informasi terkait event ini.
+                                    Tiket akan dikirim melalui WhatsApp untuk keperluan check-in dan undian berhadiah.
+                                </span>
+                            </span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-actions">
                 <a href="{{ route('public.index') }}" class="btn btn-secondary">Batal</a>
                 <button type="submit" class="btn btn-primary" id="submitBtn">

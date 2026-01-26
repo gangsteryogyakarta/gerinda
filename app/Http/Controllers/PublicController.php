@@ -113,9 +113,10 @@ class PublicController extends Controller
                     ->with('info', 'Anda sudah terdaftar di event ini.');
             }
 
-            // Register to event
+            // Register to event with WA consent from form
             $registration = $this->registrationService->register($event, $massa, [
                 'registration_source' => 'public_form',
+                'wa_consent' => $request->has('wa_consent'),
             ]);
 
             DB::commit();

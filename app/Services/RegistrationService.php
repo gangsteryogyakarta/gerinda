@@ -43,8 +43,12 @@ class RegistrationService
 
         // Determine initial status
         $status = $event->is_full ? 'waitlist' : 'pending';
+        
+        // Extract wa_consent from customFields (default to true for backwards compatibility)
+        $waConsent = $customFields['wa_consent'] ?? true;
+        unset($customFields['wa_consent']); // Don't store in custom_field_values
 
-        return DB::transaction(function () use ($event, $massa, $customFields, $registeredBy, $status) {
+        return DB::transaction(function () use ($event, $massa, $customFields, $registeredBy, $status, $waConsent) {
             // Create registration
             $registration = EventRegistration::create([
                 'event_id' => $event->id,
@@ -65,8 +69,8 @@ class RegistrationService
             // Update statistics
             $this->updateRegistrationStats($event, $massa);
 
-            // Send notification if enabled
-            if ($event->send_wa_notification && $massa->no_hp) {
+            // Send notification if enabled AND user consented
+            if ($event->send_wa_notification && $massa->no_hp && $waConsent) {
                 $this->notificationService->sendTicketNotification($registration);
             }
 

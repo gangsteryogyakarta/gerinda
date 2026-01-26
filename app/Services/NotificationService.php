@@ -88,7 +88,7 @@ class NotificationService
     }
 
     /**
-     * Send WhatsApp message via gateway
+     * Send WhatsApp message via WhatsAppService (WAHA)
      */
     protected function sendWhatsApp(
         string $phoneNumber,
@@ -111,33 +111,29 @@ class NotificationService
             'status' => 'pending',
         ]);
 
-        // If no gateway configured, just log
-        if (empty($this->waGatewayUrl)) {
-            Log::info('WA Gateway not configured', [
-                'recipient' => $phoneNumber,
-                'message' => $message,
-            ]);
-            return $log;
-        }
-
         try {
-            $response = Http::timeout(30)
-                ->withHeaders([
-                    'Authorization' => 'Bearer ' . $this->waGatewayToken,
-                    'Content-Type' => 'application/json',
-                ])
-                ->post($this->waGatewayUrl . '/send', [
-                    'phone' => $phoneNumber,
-                    'message' => $message,
-                ]);
+            // Use WhatsAppService for sending
+            $whatsappService = app(\App\Services\WhatsAppService::class);
+            $result = $whatsappService->sendText($phoneNumber, $message);
 
-            if ($response->successful()) {
+            if ($result['success']) {
                 $log->markAsSent();
+                Log::info('WA Notification sent', [
+                    'recipient' => $phoneNumber,
+                    'type' => $type,
+                    'registration_id' => $registration?->id,
+                ]);
             } else {
-                $log->markAsFailed($response->body());
+                $errorMsg = $result['error'] ?? 'Unknown error';
+                $log->markAsFailed($errorMsg);
+                Log::warning('WA Notification failed', [
+                    'recipient' => $phoneNumber,
+                    'type' => $type,
+                    'error' => $errorMsg,
+                ]);
             }
         } catch (\Exception $e) {
-            Log::error('WA Gateway error', [
+            Log::error('WA Notification error', [
                 'error' => $e->getMessage(),
                 'recipient' => $phoneNumber,
             ]);
@@ -175,13 +171,16 @@ class NotificationService
     {
         $event = $registration->event;
         $massa = $registration->massa;
+        
+        // Build download URL
+        $downloadUrl = url("/registrations/{$registration->id}/download-ticket");
 
         return <<<MSG
-🎫 *TIKET KEHADIRAN*
+🎫 *KONFIRMASI PENDAFTARAN BERHASIL*
 
 Halo *{$massa->nama_lengkap}*,
 
-Anda telah terdaftar untuk event:
+Selamat! Anda telah terdaftar untuk event:
 📌 *{$event->name}*
 
 📅 Tanggal: {$event->event_start->format('d M Y')}
@@ -191,10 +190,20 @@ Anda telah terdaftar untuk event:
 
 🎟️ Nomor Tiket: *{$registration->ticket_number}*
 
-Tunjukkan tiket ini saat check-in di lokasi event.
+📥 *DOWNLOAD TIKET:*
+{$downloadUrl}
+
+⚠️ *PENTING:*
+Tiket WAJIB diprint/dicetak secara fisik untuk:
+✓ Proses Check-in di lokasi event
+✓ Mengikuti undian berhadiah
+
+Tanpa tiket fisik, Anda tidak dapat mengikuti undian berhadiah.
+
+Sampai jumpa di event!
 
 ---
-Partai Gerindra
+Partai Gerindra DIY
 MSG;
     }
 
