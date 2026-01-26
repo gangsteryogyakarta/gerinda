@@ -107,6 +107,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/campaigns', [App\Http\Controllers\WhatsAppController::class, 'storeCampaign'])->name('whatsapp.campaigns.store');
         Route::post('/campaigns/{id}/cancel', [App\Http\Controllers\WhatsAppController::class, 'cancelCampaign'])->name('whatsapp.campaigns.cancel');
         Route::post('/send-template', [App\Http\Controllers\WhatsAppController::class, 'sendTemplate'])->name('whatsapp.send-template');
+        
+        // Image sending
+        Route::post('/send-image', [App\Http\Controllers\WhatsAppController::class, 'sendImage'])->name('whatsapp.send-image');
+        Route::post('/blast-image', [App\Http\Controllers\WhatsAppController::class, 'blastImage'])->name('whatsapp.blast-image');
     });
 });
 

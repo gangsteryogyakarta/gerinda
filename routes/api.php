@@ -105,3 +105,5 @@ Route::prefix('v1')->middleware('throttle:60,1')->group(function () {
         });
     });
 });
+// WhatsApp Webhook
+Route::post('/webhooks/whatsapp', [App\Http\Controllers\Api\WhatsappWebhookController::class, 'handle']);

@@ -425,4 +425,91 @@ class WhatsAppController extends Controller
             'message' => 'Campaign cancelled',
         ]);
     }
+
+    /**
+     * Send image message
+     */
+    public function sendImage(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'phone' => 'required|string',
+            'image' => 'required|file|image|max:5120', // Max 5MB
+            'caption' => 'nullable|string|max:1024',
+        ]);
+
+        // Store uploaded image temporarily
+        $path = $request->file('image')->store('whatsapp-uploads', 'public');
+        $imageUrl = url('/storage/' . $path);
+
+        $result = $this->whatsapp->sendImage(
+            $validated['phone'],
+            $imageUrl,
+            $validated['caption'] ?? ''
+        );
+
+        return response()->json($result);
+    }
+
+    /**
+     * Blast image to massa
+     */
+    public function blastImage(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'image' => 'required|file|image|max:5120',
+            'caption' => 'nullable|string|max:1024',
+            'filter' => 'nullable|in:all,active,province',
+            'province_id' => 'nullable|integer|exists:provinces,id',
+            'regency_id' => 'nullable|integer|exists:regencies,id',
+            'gender' => 'nullable|in:L,P',
+            'limit' => 'nullable|integer|min:1|max:500',
+        ]);
+
+        // Store uploaded image
+        $path = $request->file('image')->store('whatsapp-uploads', 'public');
+        $imageUrl = url('/storage/' . $path);
+
+        // Build query for recipients
+        $query = \App\Models\Massa::query()
+            ->whereNotNull('no_hp')
+            ->where('no_hp', '!=', '');
+
+        if (($validated['filter'] ?? 'all') === 'active') {
+            $query->where('status', 'active');
+        }
+        if (($validated['filter'] ?? null) === 'province' && isset($validated['province_id'])) {
+            $query->where('province_id', $validated['province_id']);
+        }
+        if (!empty($validated['regency_id'])) {
+            $query->where('regency_id', $validated['regency_id']);
+        }
+        if (!empty($validated['gender'])) {
+            $query->where('jenis_kelamin', $validated['gender']);
+        }
+        if (isset($validated['limit'])) {
+            $query->limit($validated['limit']);
+        }
+
+        $phones = $query->pluck('no_hp')->toArray();
+
+        if (empty($phones)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No recipients found with the given filter.',
+            ], 400);
+        }
+
+        // Dispatch job for bulk image sending
+        \App\Jobs\BulkImageWhatsAppJob::dispatch(
+            $phones,
+            $imageUrl,
+            $validated['caption'] ?? ''
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => "Image blast queued for " . count($phones) . " recipients.",
+            'recipient_count' => count($phones),
+        ]);
+    }
 }

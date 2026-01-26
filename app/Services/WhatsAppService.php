@@ -4,6 +4,7 @@ namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Models\WhatsappMessageLog;
 
 class WhatsAppService
 {
@@ -33,18 +34,25 @@ class WhatsAppService
     /**
      * Send text message
      */
-    public function sendText(string $phone, string $message): array
+    public function sendText(string $phone, string $message, array $context = []): array
     {
         try {
+            $result = [];
             if ($this->provider === 'baileys') {
-                return $this->sendViaBaileys($phone, $message);
+                $result = $this->sendViaBaileys($phone, $message);
             } elseif ($this->provider === 'fonnte') {
-                return $this->sendViaFonnte($phone, $message);
+                $result = $this->sendViaFonnte($phone, $message);
             } elseif ($this->provider === 'waha') {
-                return $this->sendViaWaha($phone, $message);
+                $result = $this->sendViaWaha($phone, $message);
             } else {
-                return $this->sendViaGeneric($phone, $message);
+                $result = $this->sendViaGeneric($phone, $message);
             }
+
+            if (($result['success'] ?? false)) {
+                $this->logMessage($phone, $message, $result, $context, 'text');
+            }
+
+            return $result;
         } catch (\Exception $e) {
             Log::error('WhatsApp Send Failed', [
                 'provider' => $this->provider,
@@ -152,16 +160,18 @@ class WhatsAppService
     /**
      * Send image with caption
      */
-    public function sendImage(string $phone, string $imageUrl, string $caption = ''): array
+    public function sendImage(string $phone, string $imageUrl, string $caption = '', array $context = []): array
     {
         try {
+            $result = ['success' => false, 'error' => 'Provider not supported for images'];
+            
             if ($this->provider === 'baileys') {
                 $response = Http::timeout(30)->post($this->baseUrl . '/send-image', [
                     'phone' => $phone,
                     'imageUrl' => $imageUrl,
                     'caption' => $caption,
                 ]);
-                return [
+                $result = [
                     'success' => $response->successful() && ($response->json('success') ?? false),
                     'data' => $response->json(),
                 ];
@@ -175,14 +185,19 @@ class WhatsAppService
                     'url' => $imageUrl,
                     'countryCode' => '62',
                 ]);
-                return [
+                $result = [
                     'success' => $response->successful(),
                     'data' => $response->json(),
                 ];
             } elseif ($this->provider === 'waha') {
-                return $this->sendViaWaha($phone, $caption, $imageUrl); // Logic adjustments needed for image
+                $result = $this->sendViaWaha($phone, $caption, $imageUrl); // Logic adjustments needed for image
             }
-            return ['success' => false, 'error' => 'Image sending not supported for this provider'];
+
+            if (($result['success'] ?? false)) {
+                $this->logMessage($phone, $caption . ' [Image: '.$imageUrl.']', $result, $context, 'image');
+            }
+
+            return $result;
         } catch (\Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
         }
@@ -193,12 +208,18 @@ class WhatsAppService
      * 
      * @param array $buttons Array of ['id' => 'btn1', 'text' => 'Click Me']
      */
-    public function sendButtons(string $phone, string $body, array $buttons, ?string $title = null, ?string $footer = null): array
+    public function sendButtons(string $phone, string $body, array $buttons, ?string $title = null, ?string $footer = null, array $context = []): array
     {
         if ($this->provider === 'waha') {
             $service = new WahaService(); // Instantiate or inject proper dependency
             // Re-instantiating here for simplicity, ideally used via dependency injection
-            return $service->sendButtons($phone, $body, $buttons, $title, $footer);
+            $result = $service->sendButtons($phone, $body, $buttons, $title, $footer);
+            
+            if (($result['success'] ?? false)) {
+                $this->logMessage($phone, $body, $result, $context, 'buttons');
+            }
+            
+            return $result;
         }
 
         return ['success' => false, 'error' => 'Button messages only supported for WAHA provider'];
@@ -486,5 +507,35 @@ class WhatsAppService
             'url' => $this->baseUrl,
             'configured' => $this->provider === 'baileys' || !empty($this->token),
         ];
+    }
+    /**
+     * Log message to database
+     */
+    protected function logMessage(string $phone, string $message, array $result, array $context, string $type = 'text')
+    {
+        try {
+            $data = $result['data'] ?? [];
+            // WAHA: data contains 'id' directly or inside 'response'
+            $messageId = $data['id'] ?? ($data['response']['id'] ?? null);
+            
+            if (!$messageId && isset($data['_id'])) {
+                $messageId = $data['_id'];
+            }
+
+            WhatsappMessageLog::create([
+                'message_id' => $messageId,
+                'phone' => $phone,
+                'message' => $message,
+                'status' => 'sent', // Initial status
+                'event_id' => $context['event_id'] ?? null,
+                'campaign_id' => $context['campaign_id'] ?? null,
+                'sent_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to log WhatsApp message', [
+                'error' => $e->getMessage(),
+                'phone' => $phone
+            ]);
+        }
     }
 }
