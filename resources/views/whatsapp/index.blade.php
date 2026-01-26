@@ -1240,7 +1240,7 @@
 let qrRefreshInterval = null;
 let statusCheckInterval = null;
 
-const templates = {
+const textTemplates = {
     'event-reminder': `Halo Kader Gerindra! 🇮🇩\n\nJangan lupa hadir di acara:\n📅 {event}\n🗓️ {tanggal}\n📍 {lokasi}\n\nPastikan membawa KTP dan tiket registrasi.\n\nSalam Perjuangan! ✊\nDPD Gerindra DIY`,
     'ticket-confirm': `Selamat! 🎉\n\nRegistrasi Anda telah dikonfirmasi:\n📌 Event: {event}\n🎫 No. Tiket: {ticket}\n🗓️ Tanggal: {tanggal}\n\nTunjukkan pesan ini saat registrasi ulang.\n\nTerima kasih!\nDPD Gerindra DIY`,
     'general-blast': `Salam Perjuangan! 🇮🇩\n\nKepada seluruh kader Gerindra DIY,\n\n{isi_pesan}\n\nTerima kasih atas perhatiannya.\n\nMaju Terus Pantang Mundur! ✊\nDPD Gerindra DIY`,
@@ -1507,7 +1507,7 @@ function showResult(success, message) {
 }
 
 function useTemplate(key) {
-    const text = templates[key];
+    const text = textTemplates[key];
     const activePane = document.querySelector('.tab-content.active');
     const textarea = activePane?.querySelector('textarea');
     if (text && textarea) { textarea.value = text; textarea.dispatchEvent(new Event('input')); }
