@@ -103,6 +103,32 @@ class WhatsAppController extends Controller
     }
 
     /**
+     * Send interactive template message
+     */
+    public function sendTemplate(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'phone' => 'required|string',
+            'message' => 'required|string|max:4096',
+            'buttons' => 'required|array|min:1|max:3',
+            'buttons.*.id' => 'required|string',
+            'buttons.*.text' => 'required|string|max:20',
+            'title' => 'nullable|string|max:60',
+            'footer' => 'nullable|string|max:60',
+        ]);
+
+        $result = $this->whatsapp->sendButtons(
+            $validated['phone'],
+            $validated['message'],
+            $validated['buttons'],
+            $validated['title'] ?? null,
+            $validated['footer'] ?? null
+        );
+        
+        return response()->json($result);
+    }
+
+    /**
      * Send bulk messages
      */
     public function bulkSend(Request $request): JsonResponse

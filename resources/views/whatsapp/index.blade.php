@@ -247,6 +247,53 @@
     </main>
 </div>
 
+@section('content')
+<!-- ... existing content ... -->
+{{-- Keep existing content until resultModal --}}
+
+<!-- Template Modal -->
+<div class="modal fade" id="templateModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-magic"></i> Kirim Template</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="template-form">
+                    <input type="hidden" id="template-id">
+                    
+                    <!-- Phone Number -->
+                    <div class="form-group mb-3">
+                        <label>Nomor WhatsApp</label>
+                        <input type="text" id="template-phone" class="form-control" placeholder="08xxxxxxxxxx" required>
+                    </div>
+
+                    <!-- Dynamic Inputs -->
+                    <div id="template-inputs" class="mb-4"></div>
+
+                    <!-- Preview -->
+                    <div class="template-preview">
+                        <h6>Preview Pesan:</h6>
+                        <div class="preview-box">
+                            <div class="preview-header" id="preview-title"></div>
+                            <div class="preview-body" id="preview-body"></div>
+                            <div class="preview-footer" id="preview-footer"></div>
+                            <div class="preview-buttons" id="preview-buttons"></div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-primary" onclick="sendTemplate()">
+                    <i class="fas fa-paper-plane"></i> Kirim
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Result Modal -->
 <div class="modal fade" id="resultModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-sm">
@@ -261,6 +308,210 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    // Template Configuration
+    const templates = {
+        'event-reminder': {
+            title: 'Pengingat Event',
+            body: 'Halo! Ingatkan untuk event {event} pada {date}. Apakah Anda akan hadir?',
+            footer: 'Mohon konfirmasi',
+            inputs: [
+                { key: '{event}', label: 'Nama Event', placeholder: 'Rapat Akbar' },
+                { key: '{date}', label: 'Tanggal', type: 'date' }
+            ],
+            buttons: [
+                { id: 'yes', text: 'Ya, Saya Hadir' },
+                { id: 'no', text: 'Tidak, Batalkan' }
+            ]
+        },
+        'ticket-confirm': {
+            title: 'Konfirmasi Pembayaran',
+            body: 'Pembayaran untuk tiket {ticket} event {event} belum dikonfirmasi. Silakan selesaikan pembayaran.',
+            footer: 'Segera lakukan pembayaran',
+            inputs: [
+                { key: '{ticket}', label: 'No. Tiket', placeholder: 'TKT001' },
+                { key: '{event}', label: 'Nama Event', placeholder: 'Konser Amal' }
+            ],
+            buttons: [
+                { id: 'pay', text: 'Bayar Sekarang' },
+                { id: 'info', text: 'Info Pembayaran' }
+            ]
+        },
+        'general-blast': {
+            title: 'Informasi Penting',
+            body: 'Detail lengkap event {event}: Lokasi {location}, Waktu {time}. Daftar ulang jika diperlukan.',
+            footer: 'Panitia Event',
+            inputs: [
+                { key: '{event}', label: 'Nama Event', placeholder: 'Kumpul Warga' },
+                { key: '{location}', label: 'Lokasi', placeholder: 'Balai Desa' },
+                { key: '{time}', label: 'Waktu', type: 'time' }
+            ],
+            buttons: [
+                { id: 'daftar', text: 'Daftar Ulang' },
+                { id: 'contact', text: 'Hubungi Kami' }
+            ]
+        },
+        'thank-you': {
+            title: 'Terima Kasih',
+            body: 'Terima kasih atas partisipasi Anda di event {event}! Berikan feedback untuk membantu kami.',
+            footer: 'DPD Gerindra DIY',
+            inputs: [
+                { key: '{event}', label: 'Nama Event', placeholder: 'Jalan Sehat' }
+            ],
+            buttons: [
+                { id: 'feedback', text: 'Berikan Feedback' },
+                { id: 'share', text: 'Bagikan Pengalaman' }
+            ]
+        }
+    };
+
+    let currentTemplate = null;
+
+    function useTemplate(id) {
+        const tpl = templates[id];
+        if (!tpl) return;
+
+        currentTemplate = JSON.parse(JSON.stringify(tpl)); // Deep copy
+        document.getElementById('template-id').value = id;
+
+        // Generate Inputs
+        const container = document.getElementById('template-inputs');
+        container.innerHTML = '';
+        
+        tpl.inputs.forEach(input => {
+            const div = document.createElement('div');
+            div.className = 'form-group mb-2';
+            div.innerHTML = `
+                <label>${input.label}</label>
+                <input type="${input.type || 'text'}" class="form-control tpl-input" 
+                    data-key="${input.key}" placeholder="${input.placeholder || ''}">
+            `;
+            container.appendChild(div);
+            
+            // Bind live preview
+            const inp = div.querySelector('input');
+            inp.addEventListener('input', updatePreview);
+        });
+
+        updatePreview();
+        
+        // Show Modal using Bootstrap 5 API
+        const modal = new bootstrap.Modal(document.getElementById('templateModal'));
+        modal.show();
+    }
+
+    function updatePreview() {
+        if (!currentTemplate) return;
+
+        let body = currentTemplate.body;
+        const inputs = document.querySelectorAll('.tpl-input');
+        
+        inputs.forEach(inp => {
+            const val = inp.value || inp.dataset.key; // Show placeholder if empty
+            // Escape special regex chars
+            const key = inp.dataset.key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            body = body.replace(new RegExp(key, 'g'), `<b>${val}</b>`);
+        });
+
+        document.getElementById('preview-title').innerText = currentTemplate.title || '';
+        document.getElementById('preview-body').innerHTML = body; // Use HTML for bold
+        document.getElementById('preview-footer').innerText = currentTemplate.footer || '';
+        
+        // Buttons
+        const btnContainer = document.getElementById('preview-buttons');
+        btnContainer.innerHTML = '';
+        currentTemplate.buttons.forEach(btn => {
+            const b = document.createElement('div');
+            b.className = 'preview-btn';
+            b.innerText = btn.text;
+            btnContainer.appendChild(b);
+        });
+    }
+
+    async function sendTemplate() {
+        const phone = document.getElementById('template-phone').value;
+        if (!phone) {
+            alert('Nomor WhatsApp wajib diisi');
+            return;
+        }
+
+        // Construct finalized message
+        let body = currentTemplate.body;
+        const inputs = document.querySelectorAll('.tpl-input');
+        let missing = false;
+
+        inputs.forEach(inp => {
+            if (!inp.value) missing = true;
+            const key = inp.dataset.key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            body = body.replace(new RegExp(key, 'g'), inp.value);
+        });
+
+        if (missing) {
+            alert('Harap lengkapi semua field template');
+            return;
+        }
+
+        const btnSend = document.querySelector('#templateModal .btn-primary');
+        const originalText = btnSend.innerHTML;
+        btnSend.disabled = true;
+        btnSend.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Mengirim...';
+
+        try {
+            const response = await fetch('/whatsapp/send-template', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({
+                    phone: phone,
+                    message: body,
+                    buttons: currentTemplate.buttons,
+                    title: currentTemplate.title,
+                    footer: currentTemplate.footer
+                })
+            });
+
+            const result = await response.json();
+
+            // Hide template modal
+            const modalEl = document.getElementById('templateModal');
+            const modalInstance = bootstrap.Modal.getInstance(modalEl);
+            modalInstance.hide();
+
+            // Show result
+            showResult(result.success, result.success ? 'Pesan template berhasil dikirim' : (result.error || 'Gagal mengirim pesan'));
+
+        } catch (error) {
+            console.error(error);
+            showResult(false, 'Terjadi kesalahan sistem');
+        } finally {
+            btnSend.disabled = false;
+            btnSend.innerHTML = originalText;
+        }
+    }
+
+    function showResult(success, message) {
+        const modal = new bootstrap.Modal(document.getElementById('resultModal'));
+        const iconContainer = document.getElementById('result-icon-container');
+        const title = document.getElementById('result-title');
+        const msg = document.getElementById('result-message');
+
+        if (success) {
+            iconContainer.innerHTML = '<i class="fas fa-check-circle" style="color: var(--success); font-size: 3rem;"></i>';
+            title.innerText = 'Berhasil';
+        } else {
+            iconContainer.innerHTML = '<i class="fas fa-times-circle" style="color: var(--danger); font-size: 3rem;"></i>';
+            title.innerText = 'Gagal';
+        }
+
+        msg.innerText = message;
+        modal.show();
+    }
+</script>
+@endpush
 
 @push('styles')
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -839,6 +1090,70 @@
     .tab-btn span { display: none; }
     
     .form-row.two-cols .form-group { min-width: 100%; }
+}
+/* === Template Preview === */
+.template-preview {
+    background: var(--gray-50);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--gray-200);
+}
+
+.template-preview h6 {
+    font-size: 0.8rem;
+    color: var(--gray-500);
+    margin: 0 0 0.5rem;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.preview-box {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    overflow: hidden;
+    max-width: 320px;
+    margin: 0 auto;
+}
+
+.preview-header {
+    background: var(--gray-100);
+    padding: 0.75rem 1rem;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--dark);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.preview-body {
+    padding: 1rem;
+    font-size: 0.95rem;
+    color: var(--dark);
+    line-height: 1.5;
+}
+
+.preview-footer {
+    padding: 0.5rem 1rem 0.75rem;
+    font-size: 0.8rem;
+    color: var(--gray-500);
+}
+
+.preview-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    background: var(--gray-200);
+    border-top: 1px solid var(--gray-200);
+}
+
+.preview-btn {
+    background: white;
+    padding: 0.75rem;
+    text-align: center;
+    color: #007AFF; /* WhatsApp Blue */
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: default;
 }
 </style>
 @endpush
