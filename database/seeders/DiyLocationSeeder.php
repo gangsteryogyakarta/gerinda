@@ -54,9 +54,6 @@ class DiyLocationSeeder extends Seeder
 
                     $villCounter = 1001;
                     foreach ($villages as $villName => $postalCode) {
-                        $villCode = $distCode . str_pad($villCounter, 4, '0', STR_PAD_LEFT);
-                        $villCounter++;
-
                         // Check if village exists
                         $village = Village::where('district_id', $district->id)
                             ->where('name', $villName)
@@ -66,13 +63,25 @@ class DiyLocationSeeder extends Seeder
                             // Only update postal_code, keep existing code
                             $village->update(['postal_code' => $postalCode]);
                         } else {
-                            // Create new village with code
+                            // Create new village with unique code  
+                            $villCode = $distCode . str_pad($villCounter, 4, '0', STR_PAD_LEFT);
+                            
+                            // Check if code exists, if so generate unique one
+                            $maxRetries = 10;
+                            $retry = 0;
+                            while (Village::where('code', $villCode)->exists() && $retry < $maxRetries) {
+                                $villCounter++;
+                                $villCode = $distCode . str_pad($villCounter, 4, '0', STR_PAD_LEFT);
+                                $retry++;
+                            }
+                            
                             Village::create([
                                 'district_id' => $district->id,
                                 'name' => $villName,
                                 'code' => $villCode,
                                 'postal_code' => $postalCode
                             ]);
+                            $villCounter++;
                         }
                     }
                 }
