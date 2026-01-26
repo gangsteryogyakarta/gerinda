@@ -159,6 +159,14 @@ class MassaService
     }
 
     /**
+     * Alias for updateCoordinates for backward compatibility
+     */
+    public function geocodeMassa(Massa $massa): bool
+    {
+        return $this->updateCoordinates($massa);
+    }
+
+    /**
      * Batch geocode multiple massa
      */
     public function batchGeocode(array $massaIds, int $delayMs = 1000): array
