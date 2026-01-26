@@ -82,9 +82,21 @@ class BulkWhatsAppJob implements ShouldQueue
 
         $batchConfig = WhatsAppRateLimiter::getBatchConfig();
 
+        // Pre-fetch massa data to avoid N+1 queries
+        $massaMap = \App\Models\Massa::whereIn('no_hp', $this->phones)
+            ->with(['regency', 'province'])
+            ->get()
+            ->keyBy('no_hp');
+
         foreach ($this->phones as $index => $phone) {
             try {
-                $result = $whatsapp->sendText($phone, $this->message);
+                // Personalize message if massa data exists
+                $massa = $massaMap->get($phone);
+                $personalizedMessage = $massa 
+                    ? $this->formatMessage($this->message, $massa) 
+                    : $this->cleanMessage($this->message);
+
+                $result = $whatsapp->sendText($phone, $personalizedMessage);
 
                 if ($result['success']) {
                     $success++;
@@ -199,5 +211,32 @@ class BulkWhatsAppJob implements ShouldQueue
         ]);
 
         $this->updateStatus('failed', count($this->phones), 0, 0, 0, 0);
+    }
+
+    /**
+     * Replace variables in message with massa data
+     */
+    protected function formatMessage(string $message, \App\Models\Massa $massa): string
+    {
+        $vars = [
+            '{nama}' => $massa->nama_lengkap,
+            '{name}' => $massa->nama_lengkap,
+            '{nik}' => $massa->nik,
+            '{no_hp}' => $massa->no_hp,
+            '{panggilan}' => $massa->jenis_kelamin === 'L' ? 'Bapak' : 'Ibu',
+            '{lokasi}' => $massa->regency?->name ?? ($massa->province?->name ?? ''),
+        ];
+
+        return str_replace(array_keys($vars), array_values($vars), $message);
+    }
+
+    /**
+     * Clean variables if no data found (fallback)
+     */
+    protected function cleanMessage(string $message): string
+    {
+        $vars = ['{nama}', '{name}', '{nik}', '{no_hp}', '{panggilan}', '{lokasi}'];
+        // Replace with generic or empty
+        return str_replace($vars, '', $message);
     }
 }
