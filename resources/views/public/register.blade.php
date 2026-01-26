@@ -907,5 +907,6 @@
             submitText.textContent = 'Mendaftarkan...';
         });
     </script>
+    @stack('scripts')
 </body>
 </html>
