@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Services\WhatsAppService;
+use App\Services\WhatsAppRateLimiter;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -21,84 +22,170 @@ class BulkWhatsAppJob implements ShouldQueue
 
     /**
      * The number of seconds the job can run before timing out.
+     * Increased to 6 hours due to batch processing pauses.
      */
-    public int $timeout = 7200; // 2 hours for large batches
+    public int $timeout = 21600;
 
     protected array $phones;
     protected string $message;
-    protected int $delayMs;
+    protected ?string $batchId;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(array $phones, string $message, int $delayMs = 1500)
+    public function __construct(array $phones, string $message, ?string $batchId = null)
     {
         $this->phones = $phones;
         $this->message = $message;
-        $this->delayMs = $delayMs;
+        $this->batchId = $batchId ?? uniqid('blast_');
     }
 
     /**
      * Execute the job.
      */
-    public function handle(WhatsAppService $whatsapp): void
+    public function handle(WhatsAppService $whatsapp, WhatsAppRateLimiter $rateLimiter): void
     {
         $total = count($this->phones);
         $success = 0;
         $failed = 0;
+        $skipped = 0;
+        $safetyEnabled = config('whatsapp.safety.enabled', true);
 
-        Log::info("BulkWhatsApp: Starting to send {$total} messages");
-        
+        Log::info("BulkWhatsApp [{$this->batchId}]: Starting to send {$total} messages", [
+            'safety_enabled' => $safetyEnabled,
+            'batch_id' => $this->batchId,
+        ]);
+
+        // Check daily limit before starting
+        if ($safetyEnabled && !$rateLimiter->canSend($total)) {
+            $remaining = $rateLimiter->getRemainingQuota();
+            Log::warning("BulkWhatsApp [{$this->batchId}]: Daily limit would be exceeded", [
+                'requested' => $total,
+                'remaining_quota' => $remaining,
+            ]);
+            
+            // Only send what we can
+            if ($remaining <= 0) {
+                $rateLimiter->logLimitReached();
+                $this->updateStatus('limit_reached', $total, 0, 0, 0, $total);
+                return;
+            }
+            
+            // Truncate phones to remaining quota
+            $this->phones = array_slice($this->phones, 0, $remaining);
+            $total = count($this->phones);
+            $skipped = count($this->phones) - $total;
+        }
+
         // Cache initial status
-        cache()->put('bulk_whatsapp_status', [
-            'status' => 'running',
-            'total' => $total,
-            'processed' => 0,
-            'success' => 0,
-            'failed' => 0,
-            'start_time' => now()->timestamp,
-        ], now()->addHours(2));
+        $this->updateStatus('running', $total, 0, 0, 0, $skipped);
+
+        $batchConfig = WhatsAppRateLimiter::getBatchConfig();
 
         foreach ($this->phones as $index => $phone) {
             try {
                 $result = $whatsapp->sendText($phone, $this->message);
-                
+
                 if ($result['success']) {
                     $success++;
+                    $rateLimiter->increment(1);
                 } else {
                     $failed++;
-                    Log::warning("BulkWhatsApp: Failed to send to {$phone}", [
-                        'error' => $result['error'] ?? 'Unknown error'
+                    Log::warning("BulkWhatsApp [{$this->batchId}]: Failed to send to {$phone}", [
+                        'error' => $result['error'] ?? 'Unknown error',
                     ]);
                 }
             } catch (\Exception $e) {
                 $failed++;
-                Log::error("BulkWhatsApp: Exception sending to {$phone}", [
-                    'error' => $e->getMessage()
+                Log::error("BulkWhatsApp [{$this->batchId}]: Exception sending to {$phone}", [
+                    'error' => $e->getMessage(),
                 ]);
             }
 
-            // Delay between messages
+            // Update status in real-time (every message)
+            $this->updateStatus('running', $total, $index + 1, $success, $failed, $skipped);
+
+            // Safety delay between messages (if not last message)
             if ($index < $total - 1) {
-                usleep($this->delayMs * 1000);
+                if ($safetyEnabled) {
+                    // Humanized random delay
+                    $delay = WhatsAppRateLimiter::getRandomDelay();
+                    usleep($delay * 1000);
+
+                    // Batch pause check
+                    if (WhatsAppRateLimiter::shouldPauseBatch($index, $total)) {
+                        $pauseSeconds = $batchConfig['pause_seconds'];
+                        Log::info("BulkWhatsApp [{$this->batchId}]: Batch pause for {$pauseSeconds} seconds", [
+                            'completed_batch' => floor(($index + 1) / $batchConfig['size']),
+                            'messages_sent' => $index + 1,
+                        ]);
+                        
+                        $this->updateStatus('batch_pause', $total, $index + 1, $success, $failed, $skipped, $pauseSeconds);
+                        sleep($pauseSeconds);
+                    }
+                } else {
+                    // Legacy fixed delay (2 seconds)
+                    usleep(2000 * 1000);
+                }
             }
 
-            // Log progress every 50 messages
-            if (($index + 1) % 50 === 0) {
+            // Log progress every 25 messages
+            if (($index + 1) % 25 === 0) {
                 $progress = $index + 1;
-                Log::info("BulkWhatsApp: Progress {$progress}/{$total}");
+                $percentage = round(($progress / $total) * 100);
+                Log::info("BulkWhatsApp [{$this->batchId}]: Progress {$progress}/{$total} ({$percentage}%)");
             }
         }
 
-        Log::info("BulkWhatsApp: Completed. Success: {$success}, Failed: {$failed}");
-
-        // Store result in cache for dashboard display
-        cache()->put('bulk_whatsapp_last_result', [
+        Log::info("BulkWhatsApp [{$this->batchId}]: Completed", [
             'total' => $total,
             'success' => $success,
             'failed' => $failed,
-            'completed_at' => now()->toISOString(),
+            'skipped' => $skipped,
+        ]);
+
+        // Store final result
+        $this->updateStatus('completed', $total, $total, $success, $failed, $skipped);
+        
+        cache()->put('bulk_whatsapp_last_result', [
+            'batch_id' => $this->batchId,
+            'total' => $total,
+            'success' => $success,
+            'failed' => $failed,
+            'skipped' => $skipped,
+            'completed_at' => now()->toIso8601String(),
         ], now()->addHours(24));
+    }
+
+    /**
+     * Update status in cache for real-time monitoring
+     */
+    protected function updateStatus(
+        string $status,
+        int $total,
+        int $processed,
+        int $success,
+        int $failed,
+        int $skipped,
+        ?int $pauseSeconds = null
+    ): void {
+        $data = [
+            'batch_id' => $this->batchId,
+            'status' => $status,
+            'total' => $total,
+            'processed' => $processed,
+            'success' => $success,
+            'failed' => $failed,
+            'skipped' => $skipped,
+            'percentage' => $total > 0 ? round(($processed / $total) * 100) : 0,
+            'updated_at' => now()->toIso8601String(),
+        ];
+
+        if ($pauseSeconds !== null) {
+            $data['pause_until'] = now()->addSeconds($pauseSeconds)->toIso8601String();
+        }
+
+        cache()->put('bulk_whatsapp_status', $data, now()->addHours(6));
     }
 
     /**
@@ -106,9 +193,11 @@ class BulkWhatsAppJob implements ShouldQueue
      */
     public function failed(\Throwable $exception): void
     {
-        Log::error('BulkWhatsApp: Job failed', [
+        Log::error("BulkWhatsApp [{$this->batchId}]: Job failed", [
             'total_phones' => count($this->phones),
             'error' => $exception->getMessage(),
         ]);
+
+        $this->updateStatus('failed', count($this->phones), 0, 0, 0, 0);
     }
 }

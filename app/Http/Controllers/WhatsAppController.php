@@ -3,16 +3,19 @@
 namespace App\Http\Controllers;
 
 use App\Services\WhatsAppService;
+use App\Services\WhatsAppRateLimiter;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class WhatsAppController extends Controller
 {
     protected WhatsAppService $whatsapp;
+    protected WhatsAppRateLimiter $rateLimiter;
 
-    public function __construct(WhatsAppService $whatsapp)
+    public function __construct(WhatsAppService $whatsapp, WhatsAppRateLimiter $rateLimiter)
     {
         $this->whatsapp = $whatsapp;
+        $this->rateLimiter = $rateLimiter;
     }
 
     /**
@@ -172,17 +175,26 @@ class WhatsAppController extends Controller
             ]);
         }
 
-        // Dispatch job
-        \App\Jobs\BulkWhatsAppJob::dispatch(
-            $phones, 
-            $validated['message'],
-            2000 // 2s delay
-        );
+        // Check rate limit
+        $rateStatus = $this->rateLimiter->getStatus();
+        if (!$this->rateLimiter->canSend(count($phones))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Daily limit would be exceeded. Remaining quota: ' . $rateStatus['remaining'],
+                'rate_limit' => $rateStatus,
+            ], 429);
+        }
+
+        // Dispatch job (no delay parameter - uses config)
+        $batchId = uniqid('massa_');
+        \App\Jobs\BulkWhatsAppJob::dispatch($phones, $validated['message'], $batchId);
         
         return response()->json([
             'success' => true,
             'message' => 'Blast started for ' . count($phones) . ' recipients. Process running in background.',
+            'batch_id' => $batchId,
             'total' => count($phones),
+            'rate_limit' => $rateStatus,
         ]);
     }
 
@@ -218,17 +230,52 @@ class WhatsAppController extends Controller
 
         $phones = $registrations->pluck('massa.no_hp')->filter()->toArray();
 
+        // Check rate limit
+        $rateStatus = $this->rateLimiter->getStatus();
+        if (!$this->rateLimiter->canSend(count($phones))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Daily limit would be exceeded. Remaining quota: ' . $rateStatus['remaining'],
+                'rate_limit' => $rateStatus,
+            ], 429);
+        }
+
         // Dispatch job
-        \App\Jobs\BulkWhatsAppJob::dispatch(
-            $phones, 
-            $validated['message'],
-            2000 // 2s delay
-        );
+        $batchId = uniqid('event_');
+        \App\Jobs\BulkWhatsAppJob::dispatch($phones, $validated['message'], $batchId);
         
         return response()->json([
             'success' => true,
             'message' => 'Notification started for ' . count($phones) . ' registrants in background.',
+            'batch_id' => $batchId,
             'total' => count($phones),
+            'rate_limit' => $rateStatus,
+        ]);
+    }
+
+    /**
+     * Get rate limit status
+     */
+    public function rateLimitStatus(): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'rate_limit' => $this->rateLimiter->getStatus(),
+        ]);
+    }
+
+    /**
+     * Get blast progress status
+     */
+    public function blastStatus(): JsonResponse
+    {
+        $status = cache()->get('bulk_whatsapp_status');
+        $lastResult = cache()->get('bulk_whatsapp_last_result');
+
+        return response()->json([
+            'success' => true,
+            'current' => $status,
+            'last_result' => $lastResult,
         ]);
     }
 }

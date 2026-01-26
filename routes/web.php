@@ -97,6 +97,10 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/blast', [App\Http\Controllers\WhatsAppController::class, 'blastToMassa'])->name('whatsapp.blast');
         Route::post('/event/{event}/notify', [App\Http\Controllers\WhatsAppController::class, 'notifyEventRegistrants'])->name('whatsapp.event.notify');
         Route::post('/check-number', [App\Http\Controllers\WhatsAppController::class, 'checkNumber'])->name('whatsapp.check-number');
+        
+        // Rate limit and status endpoints
+        Route::get('/rate-limit', [App\Http\Controllers\WhatsAppController::class, 'rateLimitStatus'])->name('whatsapp.rate-limit');
+        Route::get('/blast-status', [App\Http\Controllers\WhatsAppController::class, 'blastStatus'])->name('whatsapp.blast-status');
     });
 });
 

@@ -5,7 +5,7 @@
 @section('content')
     <!-- Header -->
     <div class="header">
-        <div class="header-left">
+        <div class="header-left m">
             <h1>👥 Daftar Peserta</h1>
             <p>{{ $event->name }}</p>
         </div>
