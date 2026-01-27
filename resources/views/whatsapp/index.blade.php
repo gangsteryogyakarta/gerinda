@@ -16,6 +16,10 @@
             </div>
         </div>
         <div class="page-header-right">
+            <a href="{{ route('whatsapp.analytics.dashboard') }}" class="btn-analytics" title="Lihat Analytics">
+                <i data-lucide="bar-chart-2"></i>
+                <span class="hidden md:inline">Analytics</span>
+            </a>
             <div id="connection-status-pill" class="connection-pill disconnected">
                 <span class="pill-dot"></span>
                 <span class="pill-text" id="connection-text">Memuat...</span>
@@ -580,6 +584,34 @@
         height: 8px;
         border-radius: 50%;
         background: currentColor;
+    }
+
+    .btn-analytics {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 16px;
+        background: white;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        box-shadow: var(--shadow-sm);
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 1px solid var(--border-color);
+        margin-right: 12px;
+    }
+
+    .btn-analytics:hover {
+        background: var(--bg-input);
+        color: var(--primary);
+        border-color: var(--primary);
+    }
+
+    .btn-analytics i {
+        width: 16px;
+        height: 16px;
     }
 
     /* Advanced Filters */

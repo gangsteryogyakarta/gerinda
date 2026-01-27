@@ -45,4 +45,9 @@ class WhatsappCampaign extends Model
         return $query->where('status', 'scheduled')
             ->where('scheduled_at', '<=', now());
     }
+
+    public function messages()
+    {
+        return $this->hasMany(WhatsappMessageLog::class, 'campaign_id');
+    }
 }

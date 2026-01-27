@@ -115,6 +115,11 @@ Route::middleware(['auth'])->group(function () {
         // Image sending
         Route::post('/send-image', [App\Http\Controllers\WhatsAppController::class, 'sendImage'])->name('whatsapp.send-image');
         Route::post('/blast-image', [App\Http\Controllers\WhatsAppController::class, 'blastImage'])->name('whatsapp.blast-image');
+
+        // Analytics
+        Route::get('/analytics/dashboard', [App\Http\Controllers\WhatsappAnalyticsController::class, 'dashboard'])->name('whatsapp.analytics.dashboard');
+        Route::get('/analytics/data', [App\Http\Controllers\WhatsappAnalyticsController::class, 'getChartData'])->name('whatsapp.analytics.data');
+        Route::get('/analytics/campaign/{campaign}', [App\Http\Controllers\WhatsappAnalyticsController::class, 'show'])->name('whatsapp.analytics.show');
     });
 });
 
