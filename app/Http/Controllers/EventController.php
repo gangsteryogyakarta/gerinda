@@ -284,6 +284,10 @@ class EventController extends Controller
      */
     public function printAllTickets(Event $event)
     {
+        // Increase memory and time limit for large PDF generation
+        ini_set('memory_limit', '512M');
+        set_time_limit(0);
+
         // Get all registrations with ticket numbers (not just confirmed)
         $registrations = $event->registrations()
             ->whereHas('massa')
