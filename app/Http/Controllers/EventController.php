@@ -282,23 +282,43 @@ class EventController extends Controller
     /**
      * Print all tickets for an event.
      */
-    public function printAllTickets(Event $event)
+    public function printAllTickets(Request $request, Event $event)
     {
         // Increase memory and time limit for large PDF generation
         ini_set('memory_limit', '1024M');
         set_time_limit(0);
 
-        // Get all registrations with ticket numbers (not just confirmed)
-        $registrations = $event->registrations()
+        // Base query
+        $query = $event->registrations()
             ->whereHas('massa')
             ->whereIn('registration_status', ['confirmed', 'pending', 'waitlist'])
             ->whereNotNull('ticket_number')
-            ->orderBy('id')
-            ->with('massa')
-            ->get();
+            ->orderBy('id');
 
-        if ($registrations->isEmpty()) {
+        $total = $query->count();
+        $perPage = 100; // Safe limit per PDF
+
+        if ($total === 0) {
             return back()->with('error', 'Belum ada tiket yang dibuat untuk event ini. Silakan klik "Generate Tiket" terlebih dahulu.');
+        }
+
+        // If total is large (> 150) and no batch selected, show selection screen
+        if ($total > 150 && !$request->has('batch')) {
+            $batches = ceil($total / $perPage);
+            return view('pdf.select_batch', compact('event', 'total', 'batches', 'perPage'));
+        }
+
+        // Handle batch processing
+        if ($request->has('batch')) {
+            $batch = (int) $request->input('batch', 1);
+            $offset = ($batch - 1) * $perPage;
+            
+            $registrations = $query->skip($offset)->take($perPage)->with('massa')->get();
+            $filename = "tickets-event-{$event->code}-batch-{$batch}.pdf";
+        } else {
+            // Small amount, print all
+            $registrations = $query->with('massa')->get();
+            $filename = "tickets-event-{$event->code}.pdf";
         }
 
         // Prepare QR Codes and Logo
@@ -327,7 +347,6 @@ class EventController extends Controller
         
         $pdf->setPaper('a4', 'portrait');
 
-        // Use download instead of stream for automatic download
-        return $pdf->download("tickets-event-{$event->code}.pdf");
+        return $pdf->download($filename);
     }
 }

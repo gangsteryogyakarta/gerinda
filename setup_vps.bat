@@ -5,7 +5,7 @@ echo  SETUP VPS GERINDRA - IDCloudHost
 echo ==========================================
 echo.
 echo [1/2] Uploading script...
-echo (Masukkan Password VPS: 4pp5.D!Y saat diminta)
+echo (Masukkan Password VPS: 4pp5GERINDRA saat diminta)
 echo.
 pscp -scp "scripts\provision.sh" root@gerindradiy.com:/root/
 

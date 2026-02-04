@@ -6,7 +6,7 @@ echo  Host: gerindradiy.com
 echo ==========================================
 echo.
 echo Connecting as root...
-echo (Password: 4pp5.D!Y)
+echo (Password: 4pp5GERINDRA)
 echo.
 
 ssh root@gerindradiy.com
