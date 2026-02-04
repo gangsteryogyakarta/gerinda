@@ -20,9 +20,8 @@
         .page-container {
             width: 200mm;
             height: 285mm;
-            position: absolute;
-            top: 6mm;
-            left: 5mm;
+            position: relative;
+            margin: 6mm auto;
         }
         
         .page-break {
@@ -65,8 +64,7 @@
             display: table-cell;
             width: 72%;
             vertical-align: middle;
-            background-color: #ef4444; /* Fallback Solid Pastel Red */
-            background-image: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            background-color: #ef4444; /* Force Solid Red */
             color: white;
             position: relative;
             padding: 10px 15px;
