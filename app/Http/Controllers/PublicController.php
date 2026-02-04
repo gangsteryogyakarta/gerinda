@@ -25,7 +25,8 @@ class PublicController extends Controller
      */
     public function index()
     {
-        $events = Event::where('status', 'published')
+        $events = Event::with(['category', 'registrations'])
+            ->where('status', 'published')
             ->where(function($q) {
                 $q->whereNull('registration_end')
                     ->orWhere('registration_end', '>', now());
@@ -69,6 +70,8 @@ class PublicController extends Controller
         $validated = $request->validate([
             'nik' => 'required|string|size:16',
             'nama_lengkap' => 'required|string|max:255',
+            'kategori_massa' => 'required|in:Pengurus,Simpatisan',
+            'sub_kategori' => 'required_if:kategori_massa,Pengurus|nullable|in:DPD DIY,DPC KABUPATEN,PAC',
             'jenis_kelamin' => 'required|in:L,P',
             'tempat_lahir' => 'nullable|string|max:100',
             'tanggal_lahir' => 'nullable|date',
@@ -83,7 +86,15 @@ class PublicController extends Controller
             'village_id' => 'nullable|exists:villages,id',
             'kode_pos' => 'nullable|string|max:10',
             'pekerjaan' => 'nullable|string|max:100',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'geocode_source' => 'nullable|string|max:30',
         ]);
+
+        // Set geocoded_at if coordinates provided
+        if (!empty($validated['latitude']) && !empty($validated['longitude'])) {
+            $validated['geocoded_at'] = now();
+        }
 
         DB::beginTransaction();
         try {
@@ -92,31 +103,35 @@ class PublicController extends Controller
             
             if (!$massa) {
                 $massa = Massa::create($validated);
-                // Try geocoding
-                $this->massaService->geocodeMassa($massa);
+                // Dispatch geocoding job if no coordinates provided
+                if (empty($massa->latitude) || empty($massa->longitude)) {
+                    \App\Jobs\GeocodeAddressJob::dispatch($massa->id);
+                }
             } else {
                 // Update existing massa data
                 $massa->update([
                     'no_hp' => $validated['no_hp'],
                     'email' => $validated['email'] ?? $massa->email,
+                    'kategori_massa' => $validated['kategori_massa'],
+                    'sub_kategori' => $validated['sub_kategori'] ?? null,
                 ]);
             }
 
-            // Check if already registered
+            // Check if already registered for this event
             $existingReg = $event->registrations()
                 ->where('massa_id', $massa->id)
                 ->first();
 
             if ($existingReg) {
                 DB::rollBack();
-                return redirect()->route('public.success', ['registration' => $existingReg])
-                    ->with('info', 'Anda sudah terdaftar di event ini.');
+                return back()->withInput()
+                    ->with('error', 'NIK ' . substr($validated['nik'], 0, 6) . '******' . substr($validated['nik'], -4) . ' sudah terdaftar untuk event ini. ' .
+                        'Silakan gunakan NIK lain atau hubungi panitia jika ada kendala.');
             }
 
-            // Register to event with WA consent from form
+            // Register to event
             $registration = $this->registrationService->register($event, $massa, [
                 'registration_source' => 'public_form',
-                'wa_consent' => $request->has('wa_consent'),
             ]);
 
             DB::commit();
@@ -235,5 +250,25 @@ class PublicController extends Controller
             ->get(['id', 'name', 'postal_code']);
 
         return response()->json($villages);
+    }
+
+    /**
+     * Download ticket PDF for a registration
+     */
+    public function downloadTicket($registrationId)
+    {
+        $registration = \App\Models\EventRegistration::with(['event', 'massa'])
+            ->findOrFail($registrationId);
+        
+        // Generate QR code if not exists
+        if (!$registration->qr_code_path) {
+            $this->registrationService->generateQrCode($registration);
+        }
+        
+        // Generate and download PDF
+        $pdfPath = $this->registrationService->generateTicketPdf($registration);
+        
+        return \Illuminate\Support\Facades\Storage::disk('public')
+            ->download($pdfPath, "tiket-{$registration->ticket_number}.pdf");
     }
 }

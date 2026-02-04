@@ -36,6 +36,17 @@ class AuthController extends Controller
         ]);
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            // Check if user is active
+            if (!Auth::user()->is_active) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+                
+                return back()->withErrors([
+                    'email' => 'Akun Anda dinonaktifkan. Silakan hubungi administrator.',
+                ])->onlyInput('email');
+            }
+
             // Clear rate limiter on success
             RateLimiter::clear($this->throttleKey($request));
             

@@ -18,8 +18,8 @@ class DashboardController extends Controller
                 'total_massa' => Massa::active()->count(),
                 'total_events' => Event::count(),
                 'active_events' => Event::whereIn('status', ['published', 'ongoing'])->count(),
-                'total_registrations' => EventRegistration::confirmed()->count(),
-                'total_checkins' => EventRegistration::checkedIn()->count(),
+                'total_registrations' => EventRegistration::confirmed()->whereHas('massa')->whereHas('event')->count(),
+                'total_checkins' => EventRegistration::checkedIn()->whereHas('massa')->whereHas('event')->count(),
                 'checkin_rate' => 0 // To be calculated
             ];
         });
@@ -39,7 +39,7 @@ class DashboardController extends Controller
 
         // 3. Top Attended Events
         $topEvents = cache()->remember('dashboard_top_events', 3600, function() {
-            return Event::withCount(['registrations as checkin_count' => fn($q) => $q->checkedIn()])
+            return Event::withCount(['registrations as checkin_count' => fn($q) => $q->checkedIn()->whereHas('massa')])
                 ->whereIn('status', ['completed', 'ongoing'])
                 ->orderByDesc('checkin_count')
                 ->limit(5)
@@ -54,11 +54,15 @@ class DashboardController extends Controller
 
             $registrations = EventRegistration::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as count')
                 ->where('created_at', '>=', now()->subMonths(6)->startOfMonth())
+                ->whereHas('massa')
+                ->whereHas('event')
                 ->groupBy('month')
                 ->pluck('count', 'month');
 
             $checkins = \App\Models\CheckinLog::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as count')
                 ->where('created_at', '>=', now()->subMonths(6)->startOfMonth())
+                ->whereHas('massa')
+                ->whereHas('event')
                 ->groupBy('month')
                 ->pluck('count', 'month');
             
@@ -69,19 +73,19 @@ class DashboardController extends Controller
             ];
         });
 
-        // 5. Massa by Province (For Distribution Chart)
-        $demographics = cache()->remember('dashboard_demographics', 86400, function() {
+        // 5. Massa by Village (Kelurahan) (For Distribution Chart)
+        $demographics = cache()->remember('dashboard_demographics_villages', 86400, function() {
             $data = Massa::active()
-                ->selectRaw('province_id, COUNT(*) as total')
-                ->whereNotNull('province_id')
-                ->groupBy('province_id')
-                ->with('province:id,name')
+                ->selectRaw('village_id, COUNT(*) as total')
+                ->whereNotNull('village_id')
+                ->groupBy('village_id')
+                ->with('village:id,name')
                 ->orderByDesc('total')
                 ->limit(5)
                 ->get();
                 
             return [
-                'labels' => $data->pluck('province.name')->toArray(),
+                'labels' => $data->pluck('village.name')->toArray(),
                 'data' => $data->pluck('total')->toArray(),
             ];
         });
@@ -89,6 +93,8 @@ class DashboardController extends Controller
         // 6. Recent Activities (Merged Log)
         $recentActivities = cache()->remember('dashboard_activities', 60, function() {
             $registrations = EventRegistration::with(['massa', 'event'])
+                ->whereHas('massa')
+                ->whereHas('event')
                 ->latest()
                 ->limit(5)
                 ->get()
@@ -103,6 +109,8 @@ class DashboardController extends Controller
                 });
 
             $checkins = \App\Models\CheckinLog::with(['registration.massa', 'event'])
+                ->whereHas('massa')
+                ->whereHas('event')
                 ->latest('created_at')
                 ->limit(5)
                 ->get()

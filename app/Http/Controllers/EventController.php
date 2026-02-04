@@ -21,9 +21,9 @@ class EventController extends Controller
     public function index(Request $request)
     {
         $query = Event::with(['category', 'province', 'regency'])
-            ->withCount(['registrations as total_registrations'])
-            ->withCount(['registrations as confirmed_count' => fn($q) => $q->confirmed()])
-            ->withCount(['registrations as checkedin_count' => fn($q) => $q->checkedIn()]);
+            ->withCount(['registrations as total_registrations' => fn($q) => $q->whereHas('massa')])
+            ->withCount(['registrations as confirmed_count' => fn($q) => $q->confirmed()->whereHas('massa')])
+            ->withCount(['registrations as checkedin_count' => fn($q) => $q->checkedIn()->whereHas('massa')]);
 
         // Filters
         if ($status = $request->input('status')) {
@@ -128,15 +128,16 @@ class EventController extends Controller
         ]);
 
         $event->loadCount([
-            'registrations as total_registrations',
-            'registrations as confirmed_count' => fn($q) => $q->confirmed(),
-            'registrations as checkedin_count' => fn($q) => $q->checkedIn(),
-            'registrations as pending_count' => fn($q) => $q->where('registration_status', 'pending'),
-            'registrations as waitlist_count' => fn($q) => $q->where('registration_status', 'waitlist'),
+            'registrations as total_registrations' => fn($q) => $q->whereHas('massa'),
+            'registrations as confirmed_count' => fn($q) => $q->confirmed()->whereHas('massa'),
+            'registrations as checkedin_count' => fn($q) => $q->checkedIn()->whereHas('massa'),
+            'registrations as pending_count' => fn($q) => $q->where('registration_status', 'pending')->whereHas('massa'),
+            'registrations as waitlist_count' => fn($q) => $q->where('registration_status', 'waitlist')->whereHas('massa'),
         ]);
 
         // Recent registrations
         $recentRegistrations = $event->registrations()
+            ->whereHas('massa')
             ->with('massa:id,nama_lengkap,no_hp')
             ->orderByDesc('created_at')
             ->limit(10)
@@ -203,9 +204,9 @@ class EventController extends Controller
      */
     public function destroy(Event $event)
     {
-        if ($event->registrations()->exists()) {
-            return back()->with('error', 'Event tidak dapat dihapus karena sudah memiliki peserta.');
-        }
+        // if ($event->registrations()->exists()) {
+        //     return back()->with('error', 'Event tidak dapat dihapus karena sudah memiliki peserta.');
+        // }
 
         $event->delete();
 
@@ -232,7 +233,7 @@ class EventController extends Controller
      */
     public function registrations(Request $request, Event $event)
     {
-        $query = $event->registrations()->with('massa');
+        $query = $event->registrations()->whereHas('massa')->with('massa');
 
         if ($status = $request->input('status')) {
             $query->where('registration_status', $status);
@@ -254,23 +255,28 @@ class EventController extends Controller
 
         $registrations = $query->orderByDesc('created_at')->paginate(20);
 
-        return view('events.registrations', compact('event', 'registrations'));
+        // Calculate stats ensuring we only count active massa
+        $stats = [
+            'confirmed' => $event->registrations()->whereHas('massa')->confirmed()->count(),
+            'checked_in' => $event->registrations()->whereHas('massa')->checkedIn()->count(),
+            'waitlist' => $event->registrations()->whereHas('massa')->where('registration_status', 'waitlist')->count(),
+        ];
+
+        return view('events.registrations', compact('event', 'registrations', 'stats'));
     }
 
     /**
      * Batch generate tickets for an event.
      */
+    /**
+     * Batch generate tickets for an event.
+     */
     public function batchGenerateTickets(Event $event)
     {
-        $results = $this->registrationService->batchGenerateTickets($event);
-
-        if ($results['success'] > 0) {
-            // Redirect to print tickets page for immediate download
-            return redirect()->route('events.print-tickets', $event)
-                ->with('success', "Berhasil generate {$results['success']} tiket, {$results['failed']} gagal. PDF sedang diunduh...");
-        }
-
-        return back()->with('info', "Tidak ada tiket yang perlu di-generate. Total registrasi: {$results['total']}");
+        // Dispatch the job effectively moving processing to background
+        \App\Jobs\GenerateBatchTicketsJob::dispatch($event, true);
+        
+        return back()->with('success', 'Proses generate tiket sedang berjalan di background. Silakan cek kembali beberapa saat lagi.');
     }
     
     /**
@@ -280,6 +286,7 @@ class EventController extends Controller
     {
         // Get all registrations with ticket numbers (not just confirmed)
         $registrations = $event->registrations()
+            ->whereHas('massa')
             ->whereIn('registration_status', ['confirmed', 'pending', 'waitlist'])
             ->whereNotNull('ticket_number')
             ->orderBy('id')

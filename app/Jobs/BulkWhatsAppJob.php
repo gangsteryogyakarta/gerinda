@@ -218,16 +218,51 @@ class BulkWhatsAppJob implements ShouldQueue
      */
     protected function formatMessage(string $message, \App\Models\Massa $massa): string
     {
+        // First, process conditional logic: {if:field=value}content{else}altcontent{endif}
+        $message = $this->processConditionals($message, $massa);
+        
+        // Then, replace simple variables
         $vars = [
-            '{nama}' => $massa->nama_lengkap,
-            '{name}' => $massa->nama_lengkap,
-            '{nik}' => $massa->nik,
-            '{no_hp}' => $massa->no_hp,
-            '{panggilan}' => $massa->jenis_kelamin === 'L' ? 'Bapak' : 'Ibu',
+            '{nama}' => $massa->nama_lengkap ?? '',
+            '{name}' => $massa->nama_lengkap ?? '',
+            '{nik}' => $massa->nik ?? '',
+            '{no_hp}' => $massa->no_hp ?? '',
+            '{panggilan}' => ($massa->jenis_kelamin === 'L') ? 'Bapak' : 'Ibu',
             '{lokasi}' => $massa->regency?->name ?? ($massa->province?->name ?? ''),
+            '{alamat}' => $massa->alamat ?? '',
+            '{kabupaten}' => $massa->regency?->name ?? '',
+            '{provinsi}' => $massa->province?->name ?? '',
+            '{jenis_kelamin}' => ($massa->jenis_kelamin === 'L') ? 'Laki-laki' : 'Perempuan',
+            '{pekerjaan}' => $massa->pekerjaan ?? '',
         ];
 
         return str_replace(array_keys($vars), array_values($vars), $message);
+    }
+
+    /**
+     * Process conditional blocks: {if:field=value}...{else}...{endif}
+     */
+    protected function processConditionals(string $message, \App\Models\Massa $massa): string
+    {
+        // Pattern: {if:field=value}content{else}altcontent{endif} or {if:field=value}content{endif}
+        $pattern = '/\{if:([a-z_]+)=([^\}]+)\}(.*?)(?:\{else\}(.*?))?\{endif\}/is';
+        
+        return preg_replace_callback($pattern, function($matches) use ($massa) {
+            $field = $matches[1];
+            $expectedValue = $matches[2];
+            $trueContent = $matches[3];
+            $falseContent = $matches[4] ?? '';
+            
+            // Get the actual value from massa
+            $actualValue = $massa->{$field} ?? '';
+            
+            // Check if condition matches
+            if (strtolower($actualValue) === strtolower($expectedValue)) {
+                return $trueContent;
+            } else {
+                return $falseContent;
+            }
+        }, $message);
     }
 
     /**
@@ -235,8 +270,15 @@ class BulkWhatsAppJob implements ShouldQueue
      */
     protected function cleanMessage(string $message): string
     {
-        $vars = ['{nama}', '{name}', '{nik}', '{no_hp}', '{panggilan}', '{lokasi}'];
-        // Replace with generic or empty
+        // Remove conditional blocks entirely (use the else content if present)
+        $pattern = '/\{if:([a-z_]+)=([^\}]+)\}(.*?)(?:\{else\}(.*?))?\{endif\}/is';
+        $message = preg_replace_callback($pattern, function($matches) {
+            return $matches[4] ?? ''; // Return else content or empty
+        }, $message);
+        
+        // Remove any remaining simple variables
+        $vars = ['{nama}', '{name}', '{nik}', '{no_hp}', '{panggilan}', '{lokasi}', 
+                 '{alamat}', '{kabupaten}', '{provinsi}', '{jenis_kelamin}', '{pekerjaan}'];
         return str_replace($vars, '', $message);
     }
 }

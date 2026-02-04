@@ -108,7 +108,7 @@ class RegistrationService
      */
     public function generateTicketPdf(EventRegistration $registration): string
     {
-        $registration->load(['event', 'massa']);
+        $registration->loadMissing(['event', 'massa']);
 
         // Get QR Code as Base64
         $qrContent = Storage::disk('public')->get($registration->qr_code_path);
@@ -134,6 +134,46 @@ class RegistrationService
         Storage::disk('public')->put($filename, $pdf->output());
 
         return $filename;
+    }
+
+    /**
+     * Ensure ticket artifiacts (Number, QR, PDF) are generated
+     */
+    public function ensureTicketGenerated(EventRegistration $registration): void
+    {
+        // 1. Ensure Ticket Number
+        if (empty($registration->ticket_number)) { 
+            // Load event if not loaded
+            if (!$registration->relationLoaded('event')) {
+                $registration->load('event');
+            }
+            
+            $registration->ticket_number = $this->generateTicketNumber($registration->event);
+            $registration->saveQuietly(); // Use saveQuietly to avoid triggering observers if any
+        }
+        
+        // 2. Ensure QR Code
+        if (empty($registration->qr_code_path) || !Storage::disk('public')->exists($registration->qr_code_path)) {
+            $this->generateQrCode($registration);
+        }
+        
+        // 3. Generate PDF (Overwrite existing to be safe)
+        $this->generateTicketPdf($registration);
+    }
+
+    /**
+     * Generate a unique ticket number
+     */
+    protected function generateTicketNumber(Event $event): string
+    {
+        $prefix = $event->code ?? 'EVT' . str_pad($event->id, 3, '0', STR_PAD_LEFT);
+        
+        do {
+            $random = Str::upper(Str::random(6));
+            $number = "{$prefix}-{$random}";
+        } while (EventRegistration::where('ticket_number', $number)->exists());
+
+        return $number;
     }
 
     /**

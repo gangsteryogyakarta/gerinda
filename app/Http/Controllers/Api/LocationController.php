@@ -15,7 +15,7 @@ class LocationController extends Controller
     {
         $search = $request->input('search');
         
-        $query = Province::query()->where('code', '34')->orderBy('name');
+        $query = Province::query()->orderBy('name');
         
         if ($search) {
             $query->where('name', 'like', "%{$search}%");

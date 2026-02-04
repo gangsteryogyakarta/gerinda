@@ -151,14 +151,34 @@ class Event extends Model
 
     public function getRegistrationOpenAttribute(): bool
     {
-        $now = now();
+        // Database stores datetime WITHOUT timezone info (assumed WIB/Asia/Jakarta)
+        // Laravel treats it as UTC when casting, so we need to adjust
+        // Get current time in WIB for fair comparison with stored WIB times
+        $nowWib = now()->setTimezone('Asia/Jakarta');
         
-        if ($this->registration_start && $now < $this->registration_start) {
-            return false;
+        // Convert stored UTC-interpreted datetime back to what it really is (WIB value)
+        // The stored value "11:10" is meant to be 11:10 WIB, but Laravel reads it as 11:10 UTC
+        // So we create a Carbon from the format string without timezone conversion
+        if ($this->registration_start) {
+            $regStartWib = \Carbon\Carbon::createFromFormat(
+                'Y-m-d H:i:s', 
+                $this->getAttributes()['registration_start'],
+                'Asia/Jakarta'
+            );
+            if ($nowWib < $regStartWib) {
+                return false;
+            }
         }
         
-        if ($this->registration_end && $now > $this->registration_end) {
-            return false;
+        if ($this->registration_end) {
+            $regEndWib = \Carbon\Carbon::createFromFormat(
+                'Y-m-d H:i:s', 
+                $this->getAttributes()['registration_end'],
+                'Asia/Jakarta'
+            );
+            if ($nowWib > $regEndWib) {
+                return false;
+            }
         }
         
         return in_array($this->status, ['published', 'ongoing']);

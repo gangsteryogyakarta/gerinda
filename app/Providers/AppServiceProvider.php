@@ -14,6 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -30,6 +31,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Force HTTPS in Production
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         // =====================================================
         // REGISTER MODEL OBSERVERS (Cache Invalidation)
         // =====================================================

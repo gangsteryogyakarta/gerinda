@@ -230,12 +230,16 @@
             </div>
         </div>
     </form>
+@endsection
+
+@push('styles')
+<style>
     /* Dropdown Styling */
     /* Unified Input Styling */
     .form-input, 
     select.form-input {
         width: 100%;
-        background-color: var(--bg-secondary);
+        background-color: var(--bg-input);
         border: 1px solid var(--border-color);
         border-radius: var(--radius);
         padding: 12px 16px;
@@ -267,7 +271,7 @@
 
     .form-input:disabled,
     select.form-input:disabled {
-        background-color: var(--bg-tertiary);
+        background-color: var(--bg-hover); /* Use defined variable instead of bg-tertiary if undefined */
         cursor: not-allowed;
         opacity: 0.7;
     }
@@ -277,32 +281,12 @@
         color: var(--text-muted);
     }
 
-    /* Dark mode specific override */
-    @media (prefers-color-scheme: dark) {
-        .form-input,
-        select.form-input {
-            background-color: #1e293b; /* Match your dark theme input bg */
-            border-color: #334155;
-            color: #f8fafc;
-        }
-        
-        select.form-input option {
-            background-color: #1e293b;
-            color: #f8fafc;
-        }
+    /* Force proper dropdown styling */
+    select option, 
+    select.form-input option {
+        background-color: #ffffff !important;
+        color: #000000 !important;
     }
-
-    /* Dark mode specific override if needed */
-    @media (prefers-color-scheme: dark) {
-        select.form-input option {
-            background-color: #1a1a1a;
-            color: #ffffff;
-        }
-    }
-@endsection
-
-@push('styles')
-<style>
     .form-grid {
         display: grid;
         grid-template-columns: 1fr 360px;

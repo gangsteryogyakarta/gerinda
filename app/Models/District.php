@@ -11,7 +11,7 @@ class District extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['regency_id', 'code', 'name'];
+    protected $fillable = ['regency_id', 'code', 'name', 'latitude', 'longitude'];
 
     public function regency(): BelongsTo
     {

@@ -48,6 +48,48 @@
                             @enderror
                         </div>
 
+                        <div class="form-group">
+                            <label class="form-label">Kategori Massa <span class="required">*</span></label>
+                            <select name="kategori_massa" id="kategori_massa" class="form-input" required onchange="toggleSubKategori()">
+                                <option value="Simpatisan" {{ old('kategori_massa') === 'Simpatisan' ? 'selected' : '' }}>Simpatisan</option>
+                                <option value="Pengurus" {{ old('kategori_massa') === 'Pengurus' ? 'selected' : '' }}>Pengurus</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" id="sub_kategori_group" style="display: none;">
+                            <label class="form-label">Sub Kategori <span class="required">*</span></label>
+                            <select name="sub_kategori" id="sub_kategori" class="form-input">
+                                <option value="">-- Pilih --</option>
+                                <option value="DPD DIY" {{ old('sub_kategori') === 'DPD DIY' ? 'selected' : '' }}>DPD DIY</option>
+                                <option value="DPC Sleman" {{ old('sub_kategori') === 'DPC Sleman' ? 'selected' : '' }}>DPC Sleman</option>
+                                <option value="DPC Kota Yogyakarta" {{ old('sub_kategori') === 'DPC Kota Yogyakarta' ? 'selected' : '' }}>DPC Kota Yogyakarta</option>
+                                <option value="DPC Bantul" {{ old('sub_kategori') === 'DPC Bantul' ? 'selected' : '' }}>DPC Bantul</option>
+                                <option value="DPC Kulon Progo" {{ old('sub_kategori') === 'DPC Kulon Progo' ? 'selected' : '' }}>DPC Kulon Progo</option>
+                                <option value="DPC Gunungkidul" {{ old('sub_kategori') === 'DPC Gunungkidul' ? 'selected' : '' }}>DPC Gunungkidul</option>
+                                <option value="PAC" {{ old('sub_kategori') === 'PAC' ? 'selected' : '' }}>PAC</option>
+                            </select>
+                        </div>
+
+                        <script>
+                            function toggleSubKategori() {
+                                const kategori = document.getElementById('kategori_massa').value;
+                                const subGroup = document.getElementById('sub_kategori_group');
+                                const subInput = document.getElementById('sub_kategori');
+                                
+                                if (kategori === 'Pengurus') {
+                                    subGroup.style.display = 'block';
+                                    subInput.required = true;
+                                } else {
+                                    subGroup.style.display = 'none';
+                                    subInput.required = false;
+                                    subInput.value = '';
+                                }
+                            }
+                            
+                            // Initialize on load
+                            document.addEventListener('DOMContentLoaded', toggleSubKategori);
+                        </script>
+
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Jenis Kelamin <span class="required">*</span></label>
@@ -245,6 +287,13 @@
         outline: none;
     }
 
+    /* Style dropdown options to be light grey as requested */
+    select.form-input option {
+        background-color: #e5e7eb; /* Light Grey (Tailwind gray-200) */
+        color: #1f2937; /* Dark Grey Text */
+        padding: 8px;
+    }
+
     .form-input:focus {
         border-color: var(--primary);
     }
@@ -302,14 +351,16 @@
         if (!this.value) return;
         
         try {
-            const response = await fetch(`/api/v1/regencies?province_id=${this.value}`);
+            // Updated endpoint structure: /locations/regencies/{province_id}
+            const response = await fetch(`/api/v1/locations/regencies/${this.value}`);
             const data = await response.json();
             
-            if (data.data) {
-                data.data.forEach(item => {
-                    regencySelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-            }
+            // API returns direct array, not wrapped in data
+            const items = Array.isArray(data) ? data : (data.data || []);
+            
+            items.forEach(item => {
+                regencySelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+            });
         } catch (error) {
             console.error('Error loading regencies:', error);
         }
@@ -325,14 +376,15 @@
         if (!this.value) return;
         
         try {
-            const response = await fetch(`/api/v1/districts?regency_id=${this.value}`);
+            // Updated endpoint structure: /locations/districts/{regency_id}
+            const response = await fetch(`/api/v1/locations/districts/${this.value}`);
             const data = await response.json();
             
-            if (data.data) {
-                data.data.forEach(item => {
-                    districtSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-            }
+            const items = Array.isArray(data) ? data : (data.data || []);
+            
+            items.forEach(item => {
+                districtSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+            });
         } catch (error) {
             console.error('Error loading districts:', error);
         }
@@ -346,16 +398,33 @@
         if (!this.value) return;
         
         try {
-            const response = await fetch(`/api/v1/villages?district_id=${this.value}`);
+            // Updated endpoint structure: /locations/villages/{district_id}
+            const response = await fetch(`/api/v1/locations/villages/${this.value}`);
             const data = await response.json();
             
-            if (data.data) {
-                data.data.forEach(item => {
-                    villageSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
-                });
-            }
+            const items = Array.isArray(data) ? data : (data.data || []);
+            
+            items.forEach(item => {
+                villageSelect.innerHTML += `<option value="${item.id}">${item.name}</option>`;
+            });
         } catch (error) {
             console.error('Error loading villages:', error);
+        }
+    });
+
+    // Auto-fill postal code on village change
+    document.getElementById('village_id').addEventListener('change', async function() {
+        const postalCodeInput = document.querySelector('input[name="kode_pos"]');
+        if (!this.value || postalCodeInput.value) return; // Don't overwrite if not empty? Maybe optional.
+        
+        try {
+            const response = await fetch(`/api/v1/locations/postal-code/${this.value}`);
+            const data = await response.json();
+            if (data.postal_code) {
+                postalCodeInput.value = data.postal_code;
+            }
+        } catch (error) {
+            console.error('Error loading postal code:', error);
         }
     });
 </script>

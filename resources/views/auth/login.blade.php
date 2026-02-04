@@ -302,7 +302,7 @@
                             </svg>
                             <input type="email" name="email" id="email" required 
                                 class="form-input"
-                                placeholder="admin@gerindradiy.com" 
+                                placeholder="Masukkan email anda" 
                                 value="{{ old('email') }}"
                                 autocomplete="email">
                         </div>

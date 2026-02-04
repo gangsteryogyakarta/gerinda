@@ -377,10 +377,19 @@
 
                 <div class="notice-box">
                     <strong>📱 Penting!</strong>
-                    Simpan nomor registrasi ini dan tunjukkan saat hadir di lokasi event. Anda juga akan menerima konfirmasi melalui WhatsApp.
+                    Simpan tiket digital ini dan tunjukkan saat hadir di lokasi event. Anda juga akan menerima konfirmasi melalui WhatsApp.
                 </div>
 
-                <a href="{{ route('public.index') }}" class="btn btn-primary">
+                <a href="{{ route('public.download-ticket', ['registration' => $registration->id]) }}" class="btn btn-primary" id="btn-download-ticket" style="margin-bottom: 0.75rem;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" x2="12" y1="15" y2="3"/>
+                    </svg>
+                    Download Tiket (PDF)
+                </a>
+
+                <a href="{{ route('public.index') }}" class="btn" style="background: var(--bg-secondary); color: var(--text-secondary);">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                         <polyline points="9 22 9 12 15 12 15 22"/>
@@ -419,6 +428,34 @@
         }
 
         createConfetti();
+
+        // Auto-download ticket PDF after a short delay (let confetti play first)
+        setTimeout(function() {
+            const downloadBtn = document.getElementById('btn-download-ticket');
+            if (downloadBtn) {
+                // Create invisible iframe for download
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = downloadBtn.href;
+                document.body.appendChild(iframe);
+                
+                // Show download success toast
+                setTimeout(function() {
+                    const toast = document.createElement('div');
+                    toast.innerHTML = '✅ Tiket berhasil diunduh!';
+                    toast.style.cssText = 'position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #10B981; color: white; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 600; z-index: 1001; animation: slideUp 0.3s ease-out;';
+                    document.body.appendChild(toast);
+                    
+                    setTimeout(() => toast.remove(), 4000);
+                }, 1500);
+            }
+        }, 1500);
     </script>
+    <style>
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+            to { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+    </style>
 </body>
 </html>

@@ -7,6 +7,7 @@
     <title>Daftar - {{ $event->nama_event }} | Gerindra DIY</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
     <style>
         :root {
             --primary: #DC2626;
@@ -44,6 +45,18 @@
             background: #F8FAFC;
             color: var(--text-primary);
             min-height: 100vh;
+        }
+
+        /* Dark Overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 0;
         }
 
         .header {
@@ -267,8 +280,10 @@
             font-family: inherit;
             outline: none;
             transition: all 0.2s ease;
-            
-            /* Fix for select elements */
+        }
+
+        /* Fix for select elements */
+        select.form-input {
             appearance: none;
             -webkit-appearance: none;
             -moz-appearance: none;
@@ -276,10 +291,6 @@
             background-repeat: no-repeat;
             background-position: right 0.75rem center;
             background-size: 16px;
-        }
-
-        /* Force consistent height for select to match inputs */
-        select.form-input {
             height: 48px; /* Approx height of text input with padding */
         }
 
@@ -669,6 +680,44 @@
                     </div>
 
                     <div class="form-group full-width">
+                        <label class="form-label">Kategori <span class="required">*</span></label>
+                        <select name="kategori_massa" id="kategori_massa" class="form-input" required onchange="toggleSubKategori()">
+                            <option value="Simpatisan" {{ old('kategori_massa') === 'Simpatisan' ? 'selected' : '' }}>Simpatisan</option>
+                            <option value="Pengurus" {{ old('kategori_massa') === 'Pengurus' ? 'selected' : '' }}>Pengurus</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group full-width" id="sub_kategori_group" style="display: none;">
+                        <label class="form-label">Sub Kategori <span class="required">*</span></label>
+                        <select name="sub_kategori" id="sub_kategori" class="form-input">
+                            <option value="">-- Pilih --</option>
+                            <option value="DPD DIY" {{ old('sub_kategori') === 'DPD DIY' ? 'selected' : '' }}>DPD DIY</option>
+                            <option value="DPC KABUPATEN" {{ old('sub_kategori') === 'DPC KABUPATEN' ? 'selected' : '' }}>DPC KABUPATEN</option>
+                            <option value="PAC" {{ old('sub_kategori') === 'PAC' ? 'selected' : '' }}>PAC</option>
+                        </select>
+                    </div>
+
+                    <script>
+                        function toggleSubKategori() {
+                            const kategori = document.getElementById('kategori_massa').value;
+                            const subGroup = document.getElementById('sub_kategori_group');
+                            const subInput = document.getElementById('sub_kategori');
+                            
+                            if (kategori === 'Pengurus') {
+                                subGroup.style.display = 'block';
+                                subInput.required = true;
+                            } else {
+                                subGroup.style.display = 'none';
+                                subInput.required = false;
+                                subInput.value = '';
+                            }
+                        }
+                        
+                        // Initialize on load
+                        document.addEventListener('DOMContentLoaded', toggleSubKategori);
+                    </script>
+
+                    <div class="form-group full-width">
                         <label class="form-label">Jenis Kelamin <span class="required">*</span></label>
                         <div class="gender-options">
                             <div class="gender-option">
@@ -777,23 +826,51 @@
                 </div>
             </div>
 
-            {{-- WhatsApp Consent --}}
-            <div class="form-section" style="background: #dcfce7; border: 1px solid #86efac;">
-                <div class="form-grid">
-                    <div class="form-group full-width" style="margin: 0;">
-                        <label style="display: flex; align-items: flex-start; gap: 0.75rem; cursor: pointer; font-size: 0.9375rem;">
-                            <input type="checkbox" name="wa_consent" id="wa_consent" value="1" checked
-                                style="width: 20px; height: 20px; margin-top: 2px; accent-color: #16a34a;">
-                            <span>
-                                <strong>📱 Terima notifikasi WhatsApp</strong><br>
-                                <span style="font-size: 0.8125rem; color: #166534;">
-                                    Saya bersedia menerima notifikasi WhatsApp berupa tiket dan informasi terkait event ini.
-                                    Tiket akan dikirim melalui WhatsApp untuk keperluan check-in dan undian berhadiah.
-                                </span>
-                            </span>
-                        </label>
+            {{-- Lokasi di Peta --}}
+            <div class="form-section">
+                <div class="form-section-title">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                        <path d="M2 12h20"/>
+                    </svg>
+                    Lokasi di Peta (Opsional)
+                </div>
+                <p style="font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                    Klik tombol "Gunakan Lokasi Saya" atau klik langsung di peta untuk menandai lokasi rumah Anda. 
+                    Ini membantu kami menampilkan sebaran massa secara akurat.
+                </p>
+                
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <button type="button" id="getLocationBtn" class="btn btn-secondary" style="flex: 1; padding: 0.625rem;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"/>
+                            <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        Gunakan Lokasi Saya
+                    </button>
+                    <button type="button" id="clearLocationBtn" class="btn btn-secondary" style="padding: 0.625rem;" title="Hapus lokasi">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"/>
+                            <line x1="6" y1="6" x2="18" y2="18"/>
+                        </svg>
+                    </button>
+                </div>
+                
+                <div id="locationMapContainer" style="height: 250px; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-light); position: relative;">
+                    <div id="locationMap" style="height: 100%; width: 100%;"></div>
+                    <div id="mapLoading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 1rem 1.5rem; border-radius: var(--radius-sm); display: none;">
+                        <span style="color: var(--text-secondary);">📍 Memuat peta...</span>
                     </div>
                 </div>
+                
+                <div id="selectedCoords" style="margin-top: 0.75rem; padding: 0.625rem; background: var(--bg-tertiary); border-radius: var(--radius-sm); font-size: 0.8125rem; color: var(--text-secondary); display: none;">
+                    📍 Koordinat: <span id="coordsDisplay">-</span>
+                </div>
+                
+                <input type="hidden" name="latitude" id="latitude" value="{{ old('latitude') }}">
+                <input type="hidden" name="longitude" id="longitude" value="{{ old('longitude') }}">
+                <input type="hidden" name="geocode_source" id="geocode_source" value="">
             </div>
 
             <div class="form-actions">
@@ -905,6 +982,133 @@
             submitIcon.style.display = 'none';
             loadingSpinner.style.display = 'block';
             submitText.textContent = 'Mendaftarkan...';
+        });
+    </script>
+    
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    
+    <!-- Map Picker Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize map
+            const defaultLat = -7.7956;  // Yogyakarta
+            const defaultLng = 110.3695;
+            const defaultZoom = 12;
+            
+            const locationMap = L.map('locationMap').setView([defaultLat, defaultLng], defaultZoom);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap'
+            }).addTo(locationMap);
+            
+            let marker = null;
+            
+            // Function to set marker
+            function setMarker(lat, lng, source) {
+                // Remove existing marker
+                if (marker) {
+                    locationMap.removeLayer(marker);
+                }
+                
+                // Add new marker
+                marker = L.marker([lat, lng], { draggable: true }).addTo(locationMap);
+                
+                // Update form fields
+                document.getElementById('latitude').value = lat.toFixed(8);
+                document.getElementById('longitude').value = lng.toFixed(8);
+                document.getElementById('geocode_source').value = source;
+                
+                // Show coordinates display
+                document.getElementById('selectedCoords').style.display = 'block';
+                document.getElementById('coordsDisplay').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                
+                // Handle marker drag
+                marker.on('dragend', function(e) {
+                    const pos = e.target.getLatLng();
+                    document.getElementById('latitude').value = pos.lat.toFixed(8);
+                    document.getElementById('longitude').value = pos.lng.toFixed(8);
+                    document.getElementById('geocode_source').value = 'user_input';
+                    document.getElementById('coordsDisplay').textContent = `${pos.lat.toFixed(6)}, ${pos.lng.toFixed(6)}`;
+                });
+            }
+            
+            // Click on map to set marker
+            locationMap.on('click', function(e) {
+                setMarker(e.latlng.lat, e.latlng.lng, 'user_input');
+            });
+            
+            // Get current location button
+            document.getElementById('getLocationBtn').addEventListener('click', function() {
+                const btn = this;
+                const originalText = btn.innerHTML;
+                
+                if (!navigator.geolocation) {
+                    alert('Geolokasi tidak didukung oleh browser Anda');
+                    return;
+                }
+                
+                btn.disabled = true;
+                btn.innerHTML = '<span style="display: inline-block; width: 16px; height: 16px; border: 2px solid #ccc; border-top-color: #666; border-radius: 50%; animation: spin 0.8s linear infinite;"></span> Mencari lokasi...';
+                
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        setMarker(lat, lng, 'gps');
+                        locationMap.setView([lat, lng], 17);
+                        
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                    },
+                    function(error) {
+                        btn.disabled = false;
+                        btn.innerHTML = originalText;
+                        
+                        let message = 'Tidak dapat mengakses lokasi. ';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                message += 'Izin lokasi ditolak.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                message += 'Lokasi tidak tersedia.';
+                                break;
+                            case error.TIMEOUT:
+                                message += 'Waktu permintaan habis.';
+                                break;
+                        }
+                        alert(message);
+                    },
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+                );
+            });
+            
+            // Clear location button
+            document.getElementById('clearLocationBtn').addEventListener('click', function() {
+                if (marker) {
+                    locationMap.removeLayer(marker);
+                    marker = null;
+                }
+                document.getElementById('latitude').value = '';
+                document.getElementById('longitude').value = '';
+                document.getElementById('geocode_source').value = '';
+                document.getElementById('selectedCoords').style.display = 'none';
+            });
+            
+            // If old values exist, restore marker
+            const oldLat = document.getElementById('latitude').value;
+            const oldLng = document.getElementById('longitude').value;
+            if (oldLat && oldLng) {
+                setMarker(parseFloat(oldLat), parseFloat(oldLng), 'user_input');
+                locationMap.setView([parseFloat(oldLat), parseFloat(oldLng)], 15);
+            }
+            
+            // Invalidate map size after a short delay (for hidden containers)
+            setTimeout(function() {
+                locationMap.invalidateSize();
+            }, 500);
         });
     </script>
     @stack('scripts')

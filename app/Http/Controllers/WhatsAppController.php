@@ -101,10 +101,19 @@ class WhatsAppController extends Controller
             'image_url' => 'nullable|url',
         ]);
 
+        // Lookup massa data for variable replacement
+        $phone = $validated['phone'];
+        $massa = \App\Models\Massa::where('no_hp', $phone)
+            ->with(['regency', 'province'])
+            ->first();
+        
+        // Format message with variable replacement
+        $formattedMessage = $this->formatMessageForPhone($validated['message'], $massa);
+
         if (!empty($validated['image_url'])) {
-            $result = $this->whatsapp->sendImage($validated['phone'], $validated['image_url'], $validated['message']);
+            $result = $this->whatsapp->sendImage($phone, $validated['image_url'], $formattedMessage);
         } else {
-            $result = $this->whatsapp->sendText($validated['phone'], $validated['message']);
+            $result = $this->whatsapp->sendText($phone, $formattedMessage);
         }
         
         return response()->json($result);
@@ -543,5 +552,78 @@ class WhatsAppController extends Controller
             'message' => "Image blast queued for " . count($phones) . " recipients.",
             'recipient_count' => count($phones),
         ]);
+    }
+
+    /**
+     * Format message with variable replacement for a given phone/massa
+     */
+    protected function formatMessageForPhone(string $message, ?\App\Models\Massa $massa): string
+    {
+        if (!$massa) {
+            return $this->cleanMessageVariables($message);
+        }
+        
+        // First, process conditional logic: {if:field=value}content{else}altcontent{endif}
+        $message = $this->processConditionals($message, $massa);
+        
+        // Then, replace simple variables
+        $vars = [
+            '{nama}' => $massa->nama_lengkap ?? '',
+            '{name}' => $massa->nama_lengkap ?? '',
+            '{nik}' => $massa->nik ?? '',
+            '{no_hp}' => $massa->no_hp ?? '',
+            '{panggilan}' => ($massa->jenis_kelamin === 'L') ? 'Bapak' : 'Ibu',
+            '{lokasi}' => $massa->regency?->name ?? ($massa->province?->name ?? ''),
+            '{alamat}' => $massa->alamat ?? '',
+            '{kabupaten}' => $massa->regency?->name ?? '',
+            '{provinsi}' => $massa->province?->name ?? '',
+            '{jenis_kelamin}' => ($massa->jenis_kelamin === 'L') ? 'Laki-laki' : 'Perempuan',
+            '{pekerjaan}' => $massa->pekerjaan ?? '',
+        ];
+
+        return str_replace(array_keys($vars), array_values($vars), $message);
+    }
+
+    /**
+     * Process conditional blocks: {if:field=value}...{else}...{endif}
+     */
+    protected function processConditionals(string $message, \App\Models\Massa $massa): string
+    {
+        // Pattern: {if:field=value}content{else}altcontent{endif} or {if:field=value}content{endif}
+        $pattern = '/\{if:([a-z_]+)=([^\}]+)\}(.*?)(?:\{else\}(.*?))?\{endif\}/is';
+        
+        return preg_replace_callback($pattern, function($matches) use ($massa) {
+            $field = $matches[1];
+            $expectedValue = $matches[2];
+            $trueContent = $matches[3];
+            $falseContent = $matches[4] ?? '';
+            
+            // Get the actual value from massa
+            $actualValue = $massa->{$field} ?? '';
+            
+            // Check if condition matches
+            if (strtolower($actualValue) === strtolower($expectedValue)) {
+                return $trueContent;
+            } else {
+                return $falseContent;
+            }
+        }, $message);
+    }
+
+    /**
+     * Clean variables if no massa data found
+     */
+    protected function cleanMessageVariables(string $message): string
+    {
+        // Remove conditional blocks entirely (use the else content if present)
+        $pattern = '/\{if:([a-z_]+)=([^\}]+)\}(.*?)(?:\{else\}(.*?))?\{endif\}/is';
+        $message = preg_replace_callback($pattern, function($matches) {
+            return $matches[4] ?? ''; // Return else content or empty
+        }, $message);
+        
+        // Remove any remaining simple variables
+        $vars = ['{nama}', '{name}', '{nik}', '{no_hp}', '{panggilan}', '{lokasi}', 
+                 '{alamat}', '{kabupaten}', '{provinsi}', '{jenis_kelamin}', '{pekerjaan}'];
+        return str_replace($vars, '', $message);
     }
 }

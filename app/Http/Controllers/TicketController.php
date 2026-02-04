@@ -17,8 +17,11 @@ class TicketController extends Controller
         $events = Event::orderBy('event_start', 'desc')->get();
         
         // Build query
+        // Build query
         $query = EventRegistration::with(['event', 'massa'])
-            ->whereNotNull('ticket_number');
+            ->whereNotNull('ticket_number')
+            ->whereHas('event')
+            ->whereHas('massa');
 
         // Search
         if ($request->has('search') && $request->search) {

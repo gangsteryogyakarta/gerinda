@@ -31,7 +31,7 @@
     </div>
 
     <!-- Summary Stats -->
-    <div class="stats-row" style="grid-template-columns: repeat(6, 1fr);">
+    <div class="stats-row" style="grid-template-columns: repeat(3, 1fr);">
         <div class="stat-card">
             <div class="stat-card-header">
                 <div class="stat-icon primary">
@@ -137,72 +137,120 @@
                 </div>
             </div>
             <div class="card-body" style="padding: 0;">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Event</th>
-                            <th>Registrasi</th>
-                            <th>Konfirmasi</th>
-                            <th>Kehadiran</th>
-                            <th>Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($eventPerformance as $event)
+                <div style="overflow-x: auto; width: 100%;">
+                    <table class="table" style="min-width: 800px;">
+                        <thead>
                             <tr>
-                                <td>
-                                    <div style="font-weight: 600;">{{ Str::limit($event->name, 30) }}</div>
-                                    <div style="font-size: 12px; color: var(--text-muted);">{{ $event->event_start->format('d M Y') }}</div>
-                                </td>
-                                <td><span class="badge badge-primary">{{ $event->registrations_count }}</span></td>
-                                <td><span class="badge badge-success">{{ $event->confirmed_count }}</span></td>
-                                <td><span class="badge badge-info">{{ $event->checkedin_count }}</span></td>
-                                <td>
-                                    @php
-                                        $rate = $event->confirmed_count > 0 
-                                            ? round(($event->checkedin_count / $event->confirmed_count) * 100) 
-                                            : 0;
-                                    @endphp
-                                    <div style="display: flex; align-items: center; gap: 8px;">
-                                        <div class="progress" style="width: 60px;">
-                                            <div class="progress-bar {{ $rate >= 80 ? 'success' : 'primary' }}" style="width: {{ $rate }}%"></div>
-                                        </div>
-                                        <span style="font-weight: 600; font-size: 12px;">{{ $rate }}%</span>
-                                    </div>
-                                </td>
+                                <th>Event</th>
+                                <th>Status</th>
+                                <th>Registrasi</th>
+                                <th>Konfirmasi</th>
+                                <th>Kehadiran</th>
+                                <th>Rate</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach($eventPerformance as $event)
+                                <tr>
+                                    <td>
+                                        <div style="font-weight: 600;">{{ Str::limit($event->name, 30) }}</div>
+                                        <div style="font-size: 12px; color: var(--text-muted);">{{ $event->event_start->format('d M Y') }}</div>
+                                    </td>
+                                    <td>
+                                        @if($event->status == 'published')
+                                            <span class="badge badge-info">Akan Datang</span>
+                                        @elseif($event->status == 'ongoing')
+                                            <span class="badge badge-primary">Berjalan</span>
+                                        @else
+                                            <span class="badge badge-success">Selesai</span>
+                                        @endif
+                                    </td>
+                                    <td><span class="badge badge-secondary">{{ $event->registrations_count }}</span></td>
+                                    <td><span class="badge badge-secondary">{{ $event->confirmed_count }}</span></td>
+                                    <td><span class="badge badge-primary">{{ $event->checkedin_count }}</span></td>
+                                    <td>
+                                        @php
+                                            $rate = $event->confirmed_count > 0 
+                                                ? round(($event->checkedin_count / $event->confirmed_count) * 100) 
+                                                : 0;
+                                        @endphp
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div class="progress" style="width: 60px;">
+                                                <div class="progress-bar {{ $rate >= 80 ? 'success' : 'primary' }}" style="width: {{ $rate }}%"></div>
+                                            </div>
+                                            <span style="font-weight: 600; font-size: 12px;">{{ $rate }}%</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- Province Distribution -->
+        <!-- Regional Distribution -->
         <div class="card">
             <div class="card-header">
                 <div class="card-title">
                     <div class="card-title-icon" style="background: var(--info-light); color: var(--info);">
                         <i data-lucide="map" style="width: 16px; height: 16px;"></i>
                     </div>
-                    Sebaran Provinsi
+                    Sebaran Wilayah
+                </div>
+                <!-- Simple Tab Toggles -->
+                <div class="tabs" style="display: flex; gap: 8px;">
+                    <button onclick="switchTab('district')" id="tab-district" class="btn btn-sm btn-primary" style="padding: 4px 10px; font-size: 11px;">Kecamatan</button>
+                    <button onclick="switchTab('village')" id="tab-village" class="btn btn-sm btn-secondary" style="padding: 4px 10px; font-size: 11px;">Kelurahan</button>
                 </div>
             </div>
+            
             <div class="card-body" style="padding: 12px 20px;">
-                @foreach($provinceStats as $stat)
-                    <div style="margin-bottom: 16px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
-                            <span style="font-size: 13px; font-weight: 500;">{{ $stat->province?->name ?? 'Unknown' }}</span>
-                            <span style="font-size: 13px; font-weight: 700; color: var(--primary);">{{ number_format($stat->total) }}</span>
+                <!-- District Stats -->
+                <div id="content-district">
+                    @forelse($districtStats as $stat)
+                        <div style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">{{ $stat->district?->name ?? 'Unknown' }}</span>
+                                <span style="font-size: 12px; font-weight: 700; color: var(--primary);">{{ number_format($stat->total) }}</span>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                @php
+                                    $maxTotal = $districtStats->first()->total ?? 1;
+                                    $percentage = ($stat->total / $maxTotal) * 100;
+                                @endphp
+                                <div class="progress-bar primary" style="width: {{ $percentage }}%;"></div>
+                            </div>
                         </div>
-                        <div class="progress">
-                            @php
-                                $maxTotal = $provinceStats->first()->total ?? 1;
-                                $percentage = ($stat->total / $maxTotal) * 100;
-                            @endphp
-                            <div class="progress-bar primary" style="width: {{ $percentage }}%;"></div>
+                    @empty
+                        <div class="empty-state" style="padding: 20px 0;">
+                            <small class="text-muted">Belum ada data kecamatan</small>
                         </div>
-                    </div>
-                @endforeach
+                    @endforelse
+                </div>
+
+                <!-- Village Stats -->
+                <div id="content-village" style="display: none;">
+                    @forelse($villageStats as $stat)
+                        <div style="margin-bottom: 12px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                <span style="font-size: 12px; font-weight: 600; color: var(--text-primary);">{{ $stat->village?->name ?? 'Unknown' }}</span>
+                                <span style="font-size: 12px; font-weight: 700; color: var(--accent);">{{ number_format($stat->total) }}</span>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                @php
+                                    $maxTotal = $villageStats->first()->total ?? 1;
+                                    $percentage = ($stat->total / $maxTotal) * 100;
+                                @endphp
+                                <div class="progress-bar warning" style="width: {{ $percentage }}%;"></div>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="empty-state" style="padding: 20px 0;">
+                            <small class="text-muted">Belum ada data kelurahan</small>
+                        </div>
+                    @endforelse
+                </div>
             </div>
         </div>
     </div>
@@ -231,24 +279,28 @@
                 {
                     label: 'Registrasi',
                     data: registrations,
-                    borderColor: '#DC2626',
-                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                    borderColor: '#f87171', /* Lighter Red */
+                    backgroundColor: 'rgba(248, 113, 113, 0.1)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
                     pointRadius: 4,
-                    pointBackgroundColor: '#DC2626',
+                    pointBackgroundColor: '#f87171',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
                 },
                 {
                     label: 'Check-in',
                     data: checkins,
-                    borderColor: '#10B981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    borderColor: '#34d399', /* Lighter Green */
+                    backgroundColor: 'rgba(52, 211, 153, 0.1)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
                     pointRadius: 4,
-                    pointBackgroundColor: '#10B981',
+                    pointBackgroundColor: '#34d399',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
                 }
             ]
         },
@@ -258,12 +310,34 @@
             plugins: {
                 legend: {
                     position: 'top',
-                    labels: { usePointStyle: true, padding: 20 }
+                    labels: { 
+                        usePointStyle: true, 
+                        padding: 20,
+                        color: '#ffffff', /* White Legend */
+                        font: { size: 12, weight: '500' }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    titleColor: '#1f2937',
+                    bodyColor: '#1f2937',
+                    titleFont: { size: 14, weight: 'bold' },
+                    displayColors: true,
+                    borderColor: 'rgba(0,0,0,0.1)',
+                    borderWidth: 1
                 }
             },
             scales: {
-                x: { grid: { display: false } },
-                y: { grid: { color: '#F3F4F6' }, beginAtZero: true }
+                x: { 
+                    grid: { display: false },
+                    ticks: { color: '#ffffff', font: { size: 11 } }
+                },
+                y: { 
+                    grid: { color: 'rgba(255, 255, 255, 0.15)' }, 
+                    beginAtZero: true,
+                    ticks: { color: '#ffffff', font: { size: 11 } },
+                    border: { display: false }
+                }
             }
         }
     });
@@ -288,26 +362,52 @@
             datasets: [{
                 label: 'Check-in',
                 data: dailyCheckins,
-                backgroundColor: [
-                    '#DC2626', '#F59E0B', '#10B981', '#3B82F6', 
-                    '#8B5CF6', '#EC4899', '#6B7280'
-                ],
+                backgroundColor: 'rgba(255, 255, 255, 0.8)', /* White Bars */
                 borderRadius: 8,
                 barThickness: 40,
+                hoverBackgroundColor: '#ffffff'
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false }
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    titleColor: '#1f2937',
+                    bodyColor: '#1f2937',
+                    titleFont: { size: 14, weight: 'bold' }
+                }
             },
             scales: {
-                x: { grid: { display: false } },
-                y: { grid: { color: '#F3F4F6' }, beginAtZero: true }
+                x: { 
+                    grid: { display: false },
+                    ticks: { color: '#ffffff', font: { size: 11 } }
+                },
+                y: { 
+                    grid: { color: 'rgba(255, 255, 255, 0.15)' }, 
+                    beginAtZero: true,
+                    ticks: { color: '#ffffff', font: { size: 11 } },
+                    border: { display: false }
+                }
             }
         }
     });
+
+    function switchTab(type) {
+        if (type === 'district') {
+            document.getElementById('content-district').style.display = 'block';
+            document.getElementById('content-village').style.display = 'none';
+            document.getElementById('tab-district').className = 'btn btn-sm btn-primary';
+            document.getElementById('tab-village').className = 'btn btn-sm btn-secondary';
+        } else {
+            document.getElementById('content-district').style.display = 'none';
+            document.getElementById('content-village').style.display = 'block';
+            document.getElementById('tab-district').className = 'btn btn-sm btn-secondary';
+            document.getElementById('tab-village').className = 'btn btn-sm btn-primary';
+        }
+    }
 
     lucide.createIcons();
 </script>

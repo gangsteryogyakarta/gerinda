@@ -3,114 +3,128 @@
 @section('title', 'Detail Kampanye')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
+<div class="analytics-container">
     <!-- Header -->
-    <div class="mb-8 flex items-center justify-between">
-        <div>
-            <div class="flex items-center gap-2 text-sm text-gray-500 mb-2">
-                <a href="{{ route('whatsapp.analytics.dashboard') }}" class="hover:text-blue-600">Analytics</a>
-                <span>/</span>
-                <span>Kampanye</span>
+    <div class="page-header">
+        <div class="page-header-left">
+            <div>
+                <div class="breadcrumb">
+                    <a href="{{ route('whatsapp.analytics.dashboard') }}">Analytics</a>
+                    <span>/</span>
+                    <span>Kampanye</span>
+                </div>
+                <h1>{{ $campaign->name }}</h1>
+                <p>Dibuat pada {{ $campaign->created_at->format('d M Y H:i') }}</p>
             </div>
-            <h1 class="text-3xl font-bold text-gray-900 tracking-tight">{{ $campaign->name }}</h1>
-            <p class="text-gray-500 mt-1">Dibuat pada {{ $campaign->created_at->format('d M Y H:i') }}</p>
         </div>
-        <div class="flex gap-3">
-             <a href="{{ route('whatsapp.analytics.dashboard') }}" class="inline-flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors shadow-sm">
-                <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i>
+        <div class="page-header-right">
+             <a href="{{ route('whatsapp.analytics.dashboard') }}" class="btn-back">
+                <i data-lucide="arrow-left"></i>
                 Kembali
             </a>
         </div>
     </div>
 
     <!-- Overview Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-blue-50 border border-blue-100 rounded-xl p-6 text-center">
-            <h3 class="text-3xl font-bold text-blue-700 mb-1">{{ number_format($stats['sent']) }}</h3>
-            <p class="text-sm font-medium text-blue-600 uppercase tracking-wide">Total Terkirim</p>
+    <div class="stats-grid">
+        <div class="stat-card" style="border-top: 4px solid var(--info);">
+            <div>
+                <h3 class="stat-value" style="color: var(--info);">{{ number_format($stats['sent']) }}</h3>
+                <p class="stat-sub uppercase">Total Terkirim</p>
+            </div>
         </div>
-        <div class="bg-green-50 border border-green-100 rounded-xl p-6 text-center">
-            <h3 class="text-3xl font-bold text-green-700 mb-1">{{ number_format($stats['delivered']) }}</h3>
-            <p class="text-sm font-medium text-green-600 uppercase tracking-wide">Diterima</p>
+        <div class="stat-card" style="border-top: 4px solid var(--success);">
+            <div>
+                <h3 class="stat-value" style="color: var(--success);">{{ number_format($stats['delivered']) }}</h3>
+                <p class="stat-sub uppercase">Diterima</p>
+            </div>
         </div>
-        <div class="bg-purple-50 border border-purple-100 rounded-xl p-6 text-center">
-            <h3 class="text-3xl font-bold text-purple-700 mb-1">{{ number_format($stats['read']) }}</h3>
-            <p class="text-sm font-medium text-purple-600 uppercase tracking-wide">Dibaca</p>
+        <div class="stat-card" style="border-top: 4px solid #a855f7;">
+            <div>
+                <h3 class="stat-value" style="color: #a855f7;">{{ number_format($stats['read']) }}</h3>
+                <p class="stat-sub uppercase">Dibaca</p>
+            </div>
         </div>
-        <div class="bg-red-50 border border-red-100 rounded-xl p-6 text-center">
-            <h3 class="text-3xl font-bold text-red-700 mb-1">{{ number_format($stats['failed']) }}</h3>
-            <p class="text-sm font-medium text-red-600 uppercase tracking-wide">Gagal</p>
+        <div class="stat-card" style="border-top: 4px solid var(--danger);">
+            <div>
+                <h3 class="stat-value" style="color: var(--danger);">{{ number_format($stats['failed']) }}</h3>
+                <p class="stat-sub uppercase">Gagal</p>
+            </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="main-layout">
         <!-- Funnel Chart -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-6">Funnel Konversi</h3>
-            <div class="h-64 relative">
-                <canvas id="funnelChart"></canvas>
+        <div class="card">
+            <div class="card-header">
+                <h3><i data-lucide="bar-chart"></i> Funnel Konversi</h3>
             </div>
-            <div class="mt-6 text-sm text-gray-500 text-center">
-                Visualisasi penurunan dari pesan dikirim hingga dibaca.
+            <div class="card-body">
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="funnelChart"></canvas>
+                </div>
+                <div class="chart-note">
+                    Visualisasi penurunan dari pesan dikirim hingga dibaca.
+                </div>
             </div>
         </div>
 
         <!-- Details Info -->
-        <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 class="text-lg font-bold text-gray-900">Log Pengiriman</h3>
-                <span class="text-xs bg-gray-100 text-gray-600 py-1 px-3 rounded-full font-medium">
+        <div class="card">
+            <div class="card-header space-between">
+                <h3><i data-lucide="list"></i> Log Pengiriman</h3>
+                <span class="badge">
                     {{ $logs->total() }} Penerima
                 </span>
             </div>
             
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-gray-50 text-gray-500 font-medium border-b border-gray-100">
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
                         <tr>
-                            <th class="px-6 py-3">No. HP</th>
-                            <th class="px-6 py-3">Status</th>
-                            <th class="px-6 py-3">Waktu Kirim</th>
-                            <th class="px-6 py-3">Waktu Baca</th>
+                            <th>No. HP</th>
+                            <th>Status</th>
+                            <th>Waktu Kirim</th>
+                            <th>Waktu Baca</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-50">
+                    <tbody>
                         @forelse($logs as $log)
-                        <tr class="hover:bg-gray-50/50 transition-colors">
-                            <td class="px-6 py-4 font-mono text-gray-600">{{ $log->phone }}</td>
-                            <td class="px-6 py-4">
+                        <tr>
+                            <td class="font-mono">{{ $log->phone }}</td>
+                            <td>
                                 @if($log->status === 'read')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                        Dibaca <i data-lucide="check-check" class="w-3 h-3 ml-1"></i>
+                                    <span class="status-pill read">
+                                        Dibaca <i data-lucide="check-check"></i>
                                     </span>
                                 @elseif($log->status === 'delivered')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        Diterima <i data-lucide="check-check" class="w-3 h-3 ml-1"></i>
+                                    <span class="status-pill delivered">
+                                        Diterima <i data-lucide="check-check"></i>
                                     </span>
                                 @elseif($log->status === 'sent')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                        Terkirim <i data-lucide="check" class="w-3 h-3 ml-1"></i>
+                                    <span class="status-pill sent">
+                                        Terkirim <i data-lucide="check"></i>
                                     </span>
                                 @elseif($log->status === 'failed')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <span class="status-pill failed">
                                         Gagal
                                     </span>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    <span class="status-pill pending">
                                         Pending
                                     </span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-gray-500">
+                            <td class="text-muted">
                                 {{ $log->sent_at ? $log->sent_at->format('d M H:i') : '-' }}
                             </td>
-                            <td class="px-6 py-4 text-gray-500">
+                            <td class="text-muted">
                                 {{ $log->read_at ? $log->read_at->format('d M H:i') : '-' }}
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="4" class="px-6 py-8 text-center text-gray-400 italic">
+                            <td colspan="4" class="empty-cell">
                                 Belum ada log pengiriman.
                             </td>
                         </tr>
@@ -120,7 +134,7 @@
             </div>
             
             <!-- Pagination -->
-            <div class="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
+            <div class="card-footer">
                 {{ $logs->links() }}
             </div>
         </div>
@@ -130,6 +144,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+
         const ctx = document.getElementById('funnelChart').getContext('2d');
         
         new Chart(ctx, {
@@ -153,20 +169,123 @@
                 }]
             },
             options: {
-                indexAxis: 'y', // Horizontal Bar Chart for Funnel-like look
+                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false }
-                },
-                scales: {
-                    x: {
-                        beginAtZero: true,
-                        grid: { display: false }
-                    }
-                }
+                plugins: { legend: { display: false } },
+                scales: { x: { beginAtZero: true, grid: { display: false } } }
             }
         });
     });
 </script>
+
+@push('styles')
+<style>
+     /* Variables (Shared) */
+     :root {
+        --primary: #c90d0d;
+        --primary-light: #fce7e7;
+        --success: #16a34a;
+        --success-light: #dcfce7;
+        --info: #3b82f6;
+        --info-light: #dbeafe;
+        --danger: #ef4444;
+        --danger-light: #fee2e2;
+        --bg-body: #f3f4f6;
+        --bg-card: #ffffff;
+        --text-primary: #1f2937;
+        --text-secondary: #4b5563;
+        --text-muted: #9ca3af;
+        --border-color: #e5e7eb;
+        --radius: 12px;
+        --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    }
+
+    .analytics-container {
+        padding: 24px;
+        max-width: 1400px;
+        margin: 0 auto;
+        color: var(--text-primary);
+        font-family: 'Inter', sans-serif;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 32px;
+        background: white;
+        padding: 20px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .breadcrumb { font-size: 13px; color: var(--text-muted); margin-bottom: 4px; display: flex; gap: 4px; }
+    .breadcrumb a { color: var(--text-secondary); text-decoration: none; }
+    .breadcrumb a:hover { color: var(--info); }
+    
+    .page-header h1 { font-size: 24px; font-weight: 700; margin: 0; }
+    .page-header p { margin: 0; color: var(--text-muted); font-size: 14px; }
+
+    .btn-back {
+        display: flex; align-items: center; gap: 8px; padding: 8px 16px;
+        border: 1px solid var(--border-color); border-radius: 8px;
+        color: var(--text-secondary); text-decoration: none; font-weight: 500;
+        transition: all 0.2s;
+    }
+    .btn-back:hover { background: var(--bg-body); color: var(--text-primary); }
+
+    .stats-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 32px;
+    }
+
+    .stat-card {
+        background: white; padding: 24px; border-radius: var(--radius);
+        box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);
+        text-align: center;
+    }
+
+     .stat-value { font-size: 32px; font-weight: 800; margin: 0; }
+     .stat-sub { font-size: 11px; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; margin-top: 4px; }
+     .uppercase { text-transform: uppercase; }
+
+     .main-layout { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; }
+     @media (max-width: 1024px) { .main-layout { grid-template-columns: 1fr; } }
+
+    .card {
+        background: white; border-radius: var(--radius); box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color); overflow: hidden; display: flex; flex-direction: column;
+    }
+
+    .card-header { padding: 20px; border-bottom: 1px solid var(--border-color); }
+    .card-header.space-between { display: flex; justify-content: space-between; align-items: center; }
+    .card-header h3 { margin: 0; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    
+    .card-body { padding: 20px; }
+    .card-footer { padding: 16px; border-top: 1px solid var(--border-color); background: #f9fafb; }
+    
+    .chart-note { text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 16px; }
+
+    .badge { background: var(--bg-body); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+
+    /* Table */
+    .table-responsive { overflow-x: auto; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .data-table th { text-align: left; padding: 12px 20px; color: var(--text-muted); font-weight: 500; border-bottom: 1px solid var(--border-color); background: #f9fafb; }
+    .data-table td { padding: 12px 20px; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
+    .data-table tr:hover { background: #f9fafb; }
+    
+    .font-mono { font-family: monospace; color: var(--text-primary); }
+    .text-muted { color: var(--text-muted); }
+    
+    .status-pill { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+    .status-pill.read { background: #f3e8ff; color: #a855f7; }
+    .status-pill.delivered { background: var(--success-light); color: var(--success); }
+    .status-pill.sent { background: var(--info-light); color: var(--info); }
+    .status-pill.failed { background: var(--danger-light); color: var(--danger); }
+    .status-pill.pending { background: var(--bg-body); color: var(--text-secondary); }
+    
+    .empty-cell { text-align: center; padding: 32px; color: var(--text-muted); font-style: italic; }
+</style>
+@endpush
 @endsection

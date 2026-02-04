@@ -16,22 +16,37 @@ class MapController extends Controller
      */
     public function index()
     {
+        // Get DIY ID
+        $diyId = Province::where('name', 'LIKE', '%YOGYAKARTA%')->value('id');
+
         $stats = [
-            'total_massa' => Massa::count(),
-            'geocoded' => Massa::whereNotNull('latitude')->count(),
-            'total_events' => Event::count(),
-            'provinces_covered' => Massa::distinct('province_id')->count('province_id'),
+            'total_massa' => Massa::where('province_id', $diyId)->count(),
+            'geocoded' => Massa::where('province_id', $diyId)->whereNotNull('latitude')->count(),
+            'total_events' => Event::where('province_id', $diyId)->count(), // Assuming Event also has province_id or filtering logic
+            'provinces_covered' => 1, // Hardcoded since we restrict to DIY
         ];
 
-        $provinceStats = Massa::select('province_id', DB::raw('count(*) as total'))
-            ->whereNotNull('province_id')
-            ->groupBy('province_id')
-            ->with('province')
+        // Top Districts (Kecamatan) - DIY Only
+        $districtStats = Massa::select('district_id', DB::raw('count(*) as total'))
+            ->where('province_id', $diyId)
+            ->whereNotNull('district_id')
+            ->groupBy('district_id')
+            ->with('district:id,name')
             ->orderByDesc('total')
             ->limit(10)
             ->get();
 
-        return view('maps.index', compact('stats', 'provinceStats'));
+        // Top Villages (Kelurahan) - DIY Only
+        $villageStats = Massa::select('village_id', DB::raw('count(*) as total'))
+            ->where('province_id', $diyId)
+            ->whereNotNull('village_id')
+            ->groupBy('village_id')
+            ->with('village:id,name')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        return view('maps.index', compact('stats', 'districtStats', 'villageStats'));
     }
 
     /**
@@ -61,14 +76,14 @@ class MapController extends Controller
         $query = DB::table('massa')
             ->join('provinces', 'massa.province_id', '=', 'provinces.id')
             ->leftJoin('regencies', 'massa.regency_id', '=', 'regencies.id')
+            ->leftJoin('districts', 'massa.district_id', '=', 'districts.id')
+            ->leftJoin('villages', 'massa.village_id', '=', 'villages.id')
             ->whereNull('massa.deleted_at');
 
-        // Filter by province
-        if ($provinceId) {
-            $query->where('massa.province_id', $provinceId);
-        }
+        // STRICTLY RESTRICT TO YOGYAKARTA
+        $query->where('provinces.name', 'LIKE', '%YOGYAKARTA%');
 
-        // Filter by regency
+        // Optional: Filter by regency within Yogyakarta
         if ($regencyId) {
             $query->where('massa.regency_id', $regencyId);
         }
@@ -79,26 +94,38 @@ class MapController extends Controller
                 'massa.latitude as lat', 
                 'massa.longitude as lng',
                 'massa.regency_id',
-                DB::raw("CONCAT(COALESCE(regencies.name, ''), ', ', provinces.name) as location"),
+                DB::raw("CONCAT(COALESCE(villages.name, ''), ', ', COALESCE(districts.name, ''), ', ', COALESCE(regencies.name, ''), ', ', provinces.name) as location"),
+                'villages.latitude as village_lat',
+                'villages.longitude as village_lng',
+                'districts.latitude as district_lat',
+                'districts.longitude as district_lng',
                 'regencies.latitude as regency_lat',
                 'regencies.longitude as regency_lng'
             )
             ->limit(5000)
             ->get();
         
-        // Process markers with fallback coordinates
+        // Process markers with CASCADING FALLBACK coordinates
         $markers = $massaData->map(function($m) {
             $lat = $m->lat;
             $lng = $m->lng;
             
-            // Use regency coordinates as fallback
+            // Fallback Logic: Village -> District -> Regency
             if (empty($lat) || empty($lng)) {
-                if (!empty($m->regency_lat) && !empty($m->regency_lng)) {
-                    // Add small random offset to prevent stacking (within ~500m radius)
-                    $lat = $m->regency_lat + (rand(-50, 50) / 10000);
-                    $lng = $m->regency_lng + (rand(-50, 50) / 10000);
+                if (!empty($m->village_lat) && !empty($m->village_lng)) {
+                    // Fallback to Village (Most precise)
+                    $lat = $m->village_lat + (rand(-20, 20) / 10000); // Small jitter ~20m
+                    $lng = $m->village_lng + (rand(-20, 20) / 10000);
+                } elseif (!empty($m->district_lat) && !empty($m->district_lng)) {
+                    // Fallback to District
+                    $lat = $m->district_lat + (rand(-50, 50) / 10000); // Medium jitter ~50m
+                    $lng = $m->district_lng + (rand(-50, 50) / 10000);
+                } elseif (!empty($m->regency_lat) && !empty($m->regency_lng)) {
+                    // Fallback to Regency
+                    $lat = $m->regency_lat + (rand(-100, 100) / 10000); // Large jitter ~100m
+                    $lng = $m->regency_lng + (rand(-100, 100) / 10000);
                 } else {
-                    return null; // No coordinates available
+                    return null; // No coordinates available anywhere
                 }
             }
             
@@ -107,7 +134,7 @@ class MapController extends Controller
                 'name' => $m->name,
                 'lat' => (float) $lat,
                 'lng' => (float) $lng,
-                'location' => $m->location,
+                'location' => trim($m->location, ', '),
             ];
         })->filter()->values();
         
@@ -119,31 +146,20 @@ class MapController extends Controller
      */
     public function heatmap(Request $request)
     {
-        return cache()->remember('maps_heatmap', 3600, function() {
+        return cache()->remember('maps_heatmap_diy', 3600, function() {
             return DB::table('massa')
-                ->whereNotNull('latitude')
-                ->whereNotNull('longitude')
-                ->select('latitude', 'longitude')
+                ->join('provinces', 'massa.province_id', '=', 'provinces.id')
+                ->where('provinces.name', 'LIKE', '%YOGYAKARTA%') // Restrict to DIY
+                ->whereNotNull('massa.latitude')
+                ->whereNotNull('massa.longitude')
+                ->select('massa.latitude', 'massa.longitude')
                 ->limit(10000)
                 ->get()
                 ->map(fn($m) => [$m->latitude, $m->longitude, 1]);
         });
     }
 
-    /**
-     * Get province statistics for choropleth - Optimized
-     */
-    public function provinceStats()
-    {
-        return cache()->remember('maps_province_stats', 3600, function() {
-            return DB::table('massa')
-                ->join('provinces', 'massa.province_id', '=', 'provinces.id')
-                ->select('massa.province_id', 'provinces.name', DB::raw('count(*) as total'))
-                ->groupBy('massa.province_id', 'provinces.name')
-                ->orderByDesc('total')
-                ->get();
-        });
-    }
+
 
     /**
      * Get event locations

@@ -12,6 +12,13 @@
     'required' => false
 ])
 
+<style>
+    .location-selector select option {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+</style>
+
 <div class="location-selector" 
      data-province-id="{{ $provinceId }}" 
      data-regency-id="{{ $regencyId }}" 
@@ -66,7 +73,7 @@
         <!-- Postal Code -->
         <div class="form-group mb-3">
             <label for="{{ $postalCodeName }}" class="form-label">Kode Pos</label>
-            <input type="text" name="{{ $postalCodeName }}" id="{{ $postalCodeName }}" class="form-input bg-gray-100" value="{{ old($postalCodeName, $postalCode) }}" readonly placeholder="Otomatis terisi">
+            <input type="text" name="{{ $postalCodeName }}" id="{{ $postalCodeName }}" class="form-input" value="{{ old($postalCodeName, $postalCode) }}" readonly>
             @error($postalCodeName)
                 <div class="form-error">{{ $message }}</div>
             @enderror
@@ -227,13 +234,13 @@ document.addEventListener('DOMContentLoaded', function() {
 /* Scoped styles for location selector to ensure consistency */
 .location-selector .form-input {
     width: 100%;
-    /* Ensure background matches - use white/variable fallback */
-    background-color: var(--bg-secondary, #ffffff); 
-    border: 1px solid var(--border-color, #CBD5E1);
-    border-radius: var(--radius, 10px); /* Specific radius match */
+    /* Ensure background matches - use theme variable */
+    background-color: var(--bg-primary); 
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md, 12px); 
     padding: 0.75rem 1rem; /* 12px 16px */
-    color: var(--text-primary, #1E293B);
-    font-size: 0.9375rem; /* ~15px */
+    color: var(--text-primary);
+    font-size: 0.9375rem; /* 14px */
     font-family: inherit;
     outline: none;
     transition: all 0.2s ease;
@@ -250,7 +257,7 @@ document.addEventListener('DOMContentLoaded', function() {
     background-position: right 1rem center;
     background-size: 1rem;
     padding-right: 2.5rem;
-    height: 48px; /* Force height match */
+    height: 46px; /* Force height match */
     line-height: 1.5;
 }
 
@@ -260,9 +267,9 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .location-selector .form-input:disabled {
-    background-color: var(--bg-tertiary, #F1F5F9);
-    cursor: not-allowed;
-    opacity: 0.8;
+    background-color: var(--bg-primary);
+    opacity: 1;
+    cursor: default;
 }
 
 .location-selector .form-label {

@@ -11,7 +11,7 @@ class Regency extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['province_id', 'code', 'name'];
+    protected $fillable = ['province_id', 'code', 'name', 'latitude', 'longitude'];
 
     public function province(): BelongsTo
     {

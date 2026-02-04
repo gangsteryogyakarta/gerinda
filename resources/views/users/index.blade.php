@@ -38,6 +38,7 @@
                         <th>Nama</th>
                         <th>Email</th>
                         <th>Role</th>
+                        <th>Status</th>
                         <th>Dibuat</th>
                         <th class="text-right">Aksi</th>
                     </tr>
@@ -61,12 +62,30 @@
                             </div>
                         </td>
                         <td>
+                            @if($user->is_active)
+                                <span class="badge badge-success">Aktif</span>
+                            @else
+                                <span class="badge badge-secondary">Non-Aktif</span>
+                            @endif
+                        </td>
+                        <td>
                             <span style="color: rgba(255,255,255,0.6); font-size: 13px;">
                                 {{ $user->created_at->format('d M Y') }}
                             </span>
                         </td>
                         <td style="text-align: right;">
                             <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                                @if(auth()->id() !== $user->id)
+                                    <form action="{{ route('users.toggle-status', $user) }}" method="POST" style="display: inline;">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn btn-sm {{ $user->is_active ? 'btn-secondary' : 'btn-success' }}" 
+                                                title="{{ $user->is_active ? 'Non-aktifkan' : 'Aktifkan' }}">
+                                            <i data-lucide="{{ $user->is_active ? 'lock' : 'unlock' }}"></i>
+                                        </button>
+                                    </form>
+                                @endif
+                                
                                 <a href="{{ route('users.edit', $user) }}" class="btn btn-sm btn-secondary" title="Edit">
                                     <i data-lucide="edit-2"></i>
                                 </a>

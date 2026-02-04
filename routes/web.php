@@ -7,9 +7,7 @@ use App\Http\Controllers\HealthController;
 
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return redirect()->route('dashboard');
-});
+Route::get('/', [App\Http\Controllers\PublicController::class, 'index'])->name('home');
 
 // Health Check Routes (for monitoring & load balancers)
 Route::get('/health', [HealthController::class, 'check'])->name('health');
@@ -29,6 +27,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // User Management
+    Route::patch('/users/{user}/toggle-status', [App\Http\Controllers\UserController::class, 'toggleStatus'])->name('users.toggle-status');
     Route::resource('users', App\Http\Controllers\UserController::class);
     
     // Profile
@@ -120,6 +119,16 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/analytics/dashboard', [App\Http\Controllers\WhatsappAnalyticsController::class, 'dashboard'])->name('whatsapp.analytics.dashboard');
         Route::get('/analytics/data', [App\Http\Controllers\WhatsappAnalyticsController::class, 'getChartData'])->name('whatsapp.analytics.data');
         Route::get('/analytics/campaign/{campaign}', [App\Http\Controllers\WhatsappAnalyticsController::class, 'show'])->name('whatsapp.analytics.show');
+
+        // Template Builder
+        Route::get('/templates', [App\Http\Controllers\WhatsAppTemplateController::class, 'index'])->name('whatsapp.templates.index');
+        Route::get('/templates/variables', [App\Http\Controllers\WhatsAppTemplateController::class, 'variables'])->name('whatsapp.templates.variables');
+        Route::post('/templates', [App\Http\Controllers\WhatsAppTemplateController::class, 'store'])->name('whatsapp.templates.store');
+        Route::get('/templates/{id}', [App\Http\Controllers\WhatsAppTemplateController::class, 'show'])->name('whatsapp.templates.show');
+        Route::put('/templates/{id}', [App\Http\Controllers\WhatsAppTemplateController::class, 'update'])->name('whatsapp.templates.update');
+        Route::delete('/templates/{id}', [App\Http\Controllers\WhatsAppTemplateController::class, 'destroy'])->name('whatsapp.templates.destroy');
+        Route::post('/templates/preview', [App\Http\Controllers\WhatsAppTemplateController::class, 'preview'])->name('whatsapp.templates.preview');
+        Route::post('/templates/{id}/duplicate', [App\Http\Controllers\WhatsAppTemplateController::class, 'duplicate'])->name('whatsapp.templates.duplicate');
     });
 });
 
@@ -129,6 +138,7 @@ Route::prefix('daftar')->middleware('throttle:registration')->group(function () 
     Route::get('/event/{event}', [App\Http\Controllers\PublicController::class, 'register'])->name('public.register');
     Route::post('/event/{event}', [App\Http\Controllers\PublicController::class, 'store'])->name('public.store');
     Route::get('/success', [App\Http\Controllers\PublicController::class, 'success'])->name('public.success');
+    Route::get('/download-ticket/{registration}', [App\Http\Controllers\PublicController::class, 'downloadTicket'])->name('public.download-ticket');
     
     // NIK lookup with stricter rate limit
     Route::get('/check-nik', [App\Http\Controllers\PublicController::class, 'checkNik'])

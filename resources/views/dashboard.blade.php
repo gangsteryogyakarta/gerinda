@@ -24,79 +24,47 @@
 
     <!-- Stats Cards -->
     <div class="stats-row">
+        <!-- Total Event -->
         <div class="stat-card animate-fade-in delay-1">
-            <div class="stat-card-header">
-                <div class="stat-icon primary">
-                    <i data-lucide="calendar-days"></i>
-                </div>
-                <div class="stat-trend up">
-                    <i data-lucide="trending-up" style="width: 14px; height: 14px;"></i>
-                    +12%
-                </div>
+            <div class="stat-icon primary">
+                <i data-lucide="calendar-days"></i>
             </div>
-            <div class="stat-value">{{ $stats['total_events'] ?? 0 }}</div>
-            <div class="stat-label">Total Event</div>
-            <div class="stat-progress">
-                <div class="stat-progress-bar">
-                    <div class="stat-progress-fill" style="width: {{ min(100, ($stats['active_events'] ?? 0) / max(1, $stats['total_events'] ?? 1) * 100) }}%"></div>
-                </div>
+            <div class="stat-info">
+                <div class="stat-value">{{ $stats['total_events'] ?? 0 }}</div>
+                <div class="stat-label">Total Event</div>
             </div>
         </div>
 
+        <!-- Total Massa -->
         <div class="stat-card animate-fade-in delay-2">
-            <div class="stat-card-header">
-                <div class="stat-icon success">
-                    <i data-lucide="users"></i>
-                </div>
-                <div class="stat-trend up">
-                    <i data-lucide="trending-up" style="width: 14px; height: 14px;"></i>
-                    +24%
-                </div>
+            <div class="stat-icon success">
+                <i data-lucide="users"></i>
             </div>
-            <div class="stat-value">{{ number_format($stats['total_massa'] ?? 0) }}</div>
-            <div class="stat-label">Total Massa</div>
-            <div class="stat-progress">
-                <div class="stat-progress-bar">
-                    <div class="stat-progress-fill success" style="width: 75%"></div>
-                </div>
+            <div class="stat-info">
+                <div class="stat-value">{{ number_format($stats['total_massa'] ?? 0) }}</div>
+                <div class="stat-label">Total Massa</div>
             </div>
         </div>
 
+        <!-- Total Registrasi -->
         <div class="stat-card animate-fade-in delay-3">
-            <div class="stat-card-header">
-                <div class="stat-icon warning">
-                    <i data-lucide="ticket"></i>
-                </div>
-                <div class="stat-trend up">
-                    <i data-lucide="trending-up" style="width: 14px; height: 14px;"></i>
-                    +8%
-                </div>
+            <div class="stat-icon warning">
+                <i data-lucide="ticket"></i>
             </div>
-            <div class="stat-value">{{ number_format($stats['total_registrations'] ?? 0) }}</div>
-            <div class="stat-label">Total Registrasi</div>
-            <div class="stat-progress">
-                <div class="stat-progress-bar">
-                    <div class="stat-progress-fill warning" style="width: 60%"></div>
-                </div>
+            <div class="stat-info">
+                <div class="stat-value">{{ number_format($stats['total_registrations'] ?? 0) }}</div>
+                <div class="stat-label">Total Registrasi</div>
             </div>
         </div>
 
+        <!-- Total Check-in -->
         <div class="stat-card animate-fade-in delay-4">
-            <div class="stat-card-header">
-                <div class="stat-icon info">
-                    <i data-lucide="check-circle"></i>
-                </div>
-                <div class="stat-trend up">
-                    <i data-lucide="trending-up" style="width: 14px; height: 14px;"></i>
-                    +15%
-                </div>
+            <div class="stat-icon info">
+                <i data-lucide="check-circle"></i>
             </div>
-            <div class="stat-value">{{ number_format($stats['total_checkins'] ?? 0) }}</div>
-            <div class="stat-label">Total Check-in</div>
-            <div class="stat-progress">
-                <div class="stat-progress-bar">
-                    <div class="stat-progress-fill" style="width: {{ $stats['checkin_rate'] ?? 0 }}%; background: linear-gradient(90deg, #3B82F6, #2563EB);"></div>
-                </div>
+            <div class="stat-info">
+                <div class="stat-value">{{ number_format($stats['total_checkins'] ?? 0) }}</div>
+                <div class="stat-label">Total Check-in</div>
             </div>
         </div>
     </div>
@@ -141,7 +109,7 @@
                 </div>
             </div>
             <div class="card-body" style="padding: 12px 24px;">
-                <div class="activity-list">
+                <div class="activity-list scroll-container">
                     @forelse($recentActivities as $activity)
                         <div class="activity-item">
                             <div class="activity-avatar" style="background: {{ $activity['type'] == 'checkin' ? 'var(--success)' : 'var(--primary)' }}; color: white;">
@@ -180,41 +148,43 @@
                 </a>
             </div>
             <div class="card-body" style="padding: 0;">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Event</th>
-                            <th>Tanggal</th>
-                            <th>Peserta</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($upcomingEvents ?? [] as $event)
+                <div class="scroll-container">
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <td>
-                                    <strong>{{ $event->name }}</strong>
-                                    <div style="font-size: 12px; color: var(--text-muted);">{{ Str::limit($event->venue_name, 25) }}</div>
-                                </td>
-                                <td>{{ $event->event_start->format('d M Y') }}</td>
-                                <td>
-                                    <span class="badge badge-primary">{{ $event->registrations_count ?? 0 }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge badge-{{ $event->status === 'ongoing' ? 'success' : 'warning' }}">
-                                        {{ ucfirst($event->status) }}
-                                    </span>
-                                </td>
+                                <th style="position: sticky; top: 0; background: var(--bg-card); backdrop-filter: blur(12px); z-index: 10;">Event</th>
+                                <th style="position: sticky; top: 0; background: var(--bg-card); backdrop-filter: blur(12px); z-index: 10;">Tanggal</th>
+                                <th style="position: sticky; top: 0; background: var(--bg-card); backdrop-filter: blur(12px); z-index: 10;">Peserta</th>
+                                <th style="position: sticky; top: 0; background: var(--bg-card); backdrop-filter: blur(12px); z-index: 10;">Status</th>
                             </tr>
-                        @empty
-                            <tr>
-                                <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                                    Belum ada event mendatang
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse($upcomingEvents ?? [] as $event)
+                                <tr>
+                                    <td>
+                                        <strong>{{ $event->name }}</strong>
+                                        <div style="font-size: 12px; color: var(--text-muted);">{{ Str::limit($event->venue_name, 25) }}</div>
+                                    </td>
+                                    <td>{{ $event->event_start->format('d M Y') }}</td>
+                                    <td>
+                                        <span class="badge badge-primary">{{ $event->registrations_count ?? 0 }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{ $event->status === 'ongoing' ? 'success' : 'warning' }}">
+                                            {{ ucfirst($event->status) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                        Belum ada event mendatang
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
@@ -225,7 +195,7 @@
                     <div class="card-title-icon">
                         <i data-lucide="map" style="width: 16px; height: 16px;"></i>
                     </div>
-                    Top 5 Provinsi (Sebaran Massa)
+                    Top 5 Kelurahan (Sebaran Massa)
                 </div>
             </div>
             <div class="card-body">
@@ -233,7 +203,7 @@
                     <canvas id="distributionChart"></canvas>
                 </div>
                 <div class="text-center mt-3 text-muted" style="font-size: 12px;">
-                    Menampilkan 5 provinsi dengan jumlah massa terbanyak.
+                    Menampilkan 5 kelurahan dengan jumlah massa terbanyak.
                 </div>
             </div>
         </div>
@@ -296,12 +266,12 @@
                 {
                     label: 'Registrasi',
                     data: trends.registrations,
-                    borderColor: '#DC2626',
+                    borderColor: '#f87171', /* Lighter red for visibility on dark bg */
                     backgroundColor: trendGradient,
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
-                    pointBackgroundColor: '#DC2626',
+                    pointBackgroundColor: '#f87171',
                     pointBorderColor: '#fff',
                     pointBorderWidth: 2,
                     pointRadius: 5,
@@ -310,12 +280,12 @@
                 {
                     label: 'Check-in',
                     data: trends.checkins,
-                    borderColor: '#10B981',
+                    borderColor: '#34d399', /* Lighter green */
                     backgroundColor: successGradient,
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
-                    pointBackgroundColor: '#10B981',
+                    pointBackgroundColor: '#34d399',
                     pointBorderColor: '#fff',
                     pointBorderWidth: 2,
                     pointRadius: 5,
@@ -331,12 +301,16 @@
                     display: false
                 },
                 tooltip: {
-                    backgroundColor: '#1F2937',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    titleColor: '#1f2937',
+                    bodyColor: '#1f2937',
                     titleFont: { size: 14, weight: 'bold' },
                     bodyFont: { size: 13 },
                     padding: 12,
                     cornerRadius: 8,
                     displayColors: true,
+                    borderColor: 'rgba(0,0,0,0.1)',
+                    borderWidth: 1
                 }
             },
             scales: {
@@ -345,19 +319,20 @@
                         display: false
                     },
                     ticks: {
-                        color: '#9CA3AF',
-                        font: { size: 12 }
+                        color: '#ffffff', /* Bright White */
+                        font: { size: 12, weight: '500' }
                     }
                 },
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: '#F3F4F6'
+                        color: 'rgba(255, 255, 255, 0.15)' /* White transparent grid */
                     },
                     ticks: {
-                        color: '#9CA3AF',
-                        font: { size: 12 }
-                    }
+                        color: '#ffffff', /* Bright White */
+                        font: { size: 12, weight: '500' }
+                    },
+                    border: { display: false }
                 }
             },
             interaction: {
@@ -377,9 +352,10 @@
                 {
                     label: 'Jumlah Massa',
                     data: demographics.data,
-                    backgroundColor: '#DC2626',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)', /* White bars */
                     borderRadius: 6,
                     barThickness: 20,
+                    hoverBackgroundColor: '#ffffff'
                 }
             ]
         },
@@ -391,6 +367,9 @@
                     display: false
                 },
                 tooltip: {
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    titleColor: '#1f2937',
+                    bodyColor: '#1f2937',
                     mode: 'index',
                     intersect: false,
                 }
@@ -401,21 +380,24 @@
                         display: false
                     },
                     ticks: {
-                        color: '#9CA3AF',
-                        font: { size: 12 },
+                        color: '#ffffff', /* Bright White */
+                        font: { size: 11, weight: '500' },
                         maxRotation: 45,
                         minRotation: 0
-                    }
+                    },
+                    border: { display: false }
+
                 },
                 y: {
                     beginAtZero: true,
                     grid: {
-                        color: '#F3F4F6'
+                         color: 'rgba(255, 255, 255, 0.15)' /* White transparent grid */
                     },
                     ticks: {
-                        color: '#9CA3AF',
-                        font: { size: 12 }
-                    }
+                        color: '#ffffff', /* Bright White */
+                        font: { size: 12, weight: '500' }
+                    },
+                    border: { display: false }
                 }
             },
         }

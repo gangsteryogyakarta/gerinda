@@ -18,6 +18,8 @@ class Massa extends Model
     protected $fillable = [
         'nik',
         'nama_lengkap',
+        'kategori_massa',
+        'sub_kategori',
         'jenis_kelamin',
         'tempat_lahir',
         'tanggal_lahir',
@@ -33,6 +35,8 @@ class Massa extends Model
         'kode_pos',
         'latitude',
         'longitude',
+        'geocode_source',
+        'geocoded_at',
         'pekerjaan',
         'foto',
         'catatan',
@@ -43,6 +47,7 @@ class Massa extends Model
         'tanggal_lahir' => 'date',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
+        'geocoded_at' => 'datetime',
     ];
 
     // Relationships

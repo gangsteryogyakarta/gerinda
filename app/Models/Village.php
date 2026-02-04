@@ -11,7 +11,7 @@ class Village extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['district_id', 'code', 'name', 'postal_code'];
+    protected $fillable = ['district_id', 'code', 'name', 'postal_code', 'latitude', 'longitude'];
 
     public function district(): BelongsTo
     {

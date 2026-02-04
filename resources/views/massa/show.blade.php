@@ -6,307 +6,499 @@
     <!-- Header -->
     <div class="page-header">
         <div class="page-header-left">
-            <h1>👤 {{ $massa->nama_lengkap }}</h1>
-            <p>
-                <code style="margin-right: 12px;">{{ $massa->nik }}</code>
-                @if($massa->latitude)
-                    <span class="badge badge-success">Geocoded</span>
-                @endif
-            </p>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="background: var(--bg-tertiary); padding: 8px; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                    <i data-lucide="user" style="width: 24px; height: 24px; color: var(--primary);"></i>
+                </div>
+                <h1 style="margin: 0;">{{ $massa->nama_lengkap }}</h1>
+            </div>
         </div>
-        <div class="page-header-right" style="display: flex; gap: 12px;">
-            <a href="{{ route('massa.edit', $massa) }}" class="btn btn-secondary">
-                <i class="lucide-edit"></i>
-                Edit
-            </a>
-            <a href="{{ route('massa.index') }}" class="btn btn-secondary">
-                <i class="lucide-arrow-left"></i>
-                Kembali
-            </a>
+        <div class="page-header-right">
+            <div style="display: flex; gap: 10px;">
+                <a href="{{ route('massa.edit', $massa) }}" class="btn btn-primary">
+                    <i data-lucide="edit-2"></i>
+                    Edit Data
+                </a>
+                <a href="{{ route('massa.index') }}" class="btn btn-secondary">
+                    <i data-lucide="arrow-left"></i>
+                    Kembali
+                </a>
+            </div>
         </div>
     </div>
 
-    <div class="grid-2">
-        <!-- Profile Card -->
-        <div class="card">
-            <div class="card-header">
-                <h3 class="card-title">🪪 Data Pribadi</h3>
-            </div>
-            <div class="card-body">
-                <div class="profile-header">
-                    <div class="profile-avatar">
-                        {{ substr($massa->nama_lengkap, 0, 2) }}
-                    </div>
-                    <div class="profile-info">
-                        <h2>{{ $massa->nama_lengkap }}</h2>
-                        <p>{{ $massa->jenis_kelamin === 'L' ? 'Laki-laki' : 'Perempuan' }}</p>
-                    </div>
-                </div>
-
-                <div class="detail-list">
-                    <div class="detail-item">
-                        <span class="detail-label">NIK</span>
-                        <span class="detail-value"><code>{{ $massa->nik }}</code></span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Tempat/Tgl Lahir</span>
-                        <span class="detail-value">
-                            {{ $massa->tempat_lahir ?? '-' }}{{ $massa->tanggal_lahir ? ', ' . $massa->tanggal_lahir->format('d M Y') : '' }}
-                            @if($massa->age)
-                                <span style="color: var(--text-muted);">({{ $massa->age }} tahun)</span>
-                            @endif
-                        </span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Pekerjaan</span>
-                        <span class="detail-value">{{ $massa->pekerjaan ?? '-' }}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">No HP</span>
-                        <span class="detail-value">{{ $massa->no_hp ?? '-' }}</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Email</span>
-                        <span class="detail-value">{{ $massa->email ?? '-' }}</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Address & Map -->
-        <div>
-            <div class="card" style="margin-bottom: 24px;">
-                <div class="card-header">
-                    <h3 class="card-title">📍 Alamat</h3>
+    <div class="profile-grid">
+        <!-- Left Column: Identity & Contact -->
+        <div class="col-left">
+            <!-- Identity Card -->
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h3 class="card-title">
+                        <i data-lucide="user-circle" style="color: var(--primary);"></i>
+                        Identitas Diri
+                    </h3>
                 </div>
                 <div class="card-body">
-                    <p style="margin-bottom: 16px;">{{ $massa->alamat }}</p>
-                    
-                    @if($massa->rt || $massa->rw)
-                        <p style="color: var(--text-secondary);">RT {{ $massa->rt ?? '-' }} / RW {{ $massa->rw ?? '-' }}</p>
-                    @endif
-                    
-                    <div class="address-hierarchy">
-                        @if($massa->village)
-                            <span>{{ $massa->village->name }}</span>
-                        @endif
-                        @if($massa->district)
-                            <span>{{ $massa->district->name }}</span>
-                        @endif
-                        @if($massa->regency)
-                            <span>{{ $massa->regency->name }}</span>
-                        @endif
-                        @if($massa->province)
-                            <span>{{ $massa->province->name }}</span>
-                        @endif
-                        @if($massa->kode_pos)
-                            <span>{{ $massa->kode_pos }}</span>
-                        @endif
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <i data-lucide="user"></i>
+                        </div>
+                        <div class="detail-content">
+                            <label>Nama Lengkap</label>
+                            <p>{{ $massa->nama_lengkap }}</p>
+                        </div>
                     </div>
 
-                    @if($massa->latitude && $massa->longitude)
-                        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-color);">
-                            <strong style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                <i class="lucide-map" style="color: var(--success);"></i>
-                                Koordinat
-                            </strong>
-                            <code>{{ $massa->latitude }}, {{ $massa->longitude }}</code>
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <i data-lucide="credit-card"></i>
+                        </div>
+                        <div class="detail-content">
+                            <label>NIK</label>
+                            <p>{{ $massa->nik }}</p>
+                        </div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <i data-lucide="{{ $massa->jenis_kelamin == 'L' ? 'user' : 'user-check' }}"></i>
+                        </div>
+                        <div class="detail-content">
+                            <label>Jenis Kelamin</label>
+                            <p>{{ $massa->jenis_kelamin == 'L' ? 'Laki-laki' : 'Perempuan' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <i data-lucide="award"></i>
+                        </div>
+                        <div class="detail-content">
+                            <label>Kategori</label>
+                            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                                <span class="badge badge-{{ $massa->kategori_massa === 'Pengurus' ? 'primary' : 'secondary' }}">
+                                    {{ $massa->kategori_massa ?? 'Simpatisan' }}
+                                </span>
+                                @if($massa->sub_kategori)
+                                    <span class="badge badge-info">{{ $massa->sub_kategori }}</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <i data-lucide="calendar"></i>
+                        </div>
+                        <div class="detail-content">
+                            <label>Tempat, Tanggal Lahir</label>
+                            <p>
+                                {{ $massa->tempat_lahir ?? '-' }}, {{ $massa->tanggal_lahir ? $massa->tanggal_lahir->format('d F Y') : '-' }}
+                                @if($massa->age)
+                                    <span class="text-muted">({{ $massa->age }} tahun)</span>
+                                @endif
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <i data-lucide="briefcase"></i>
+                        </div>
+                        <div class="detail-content">
+                            <label>Pekerjaan</label>
+                            <p>{{ $massa->pekerjaan ?? '-' }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Card -->
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h3 class="card-title">
+                        <i data-lucide="phone" style="color: var(--info);"></i>
+                        Kontak
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <i data-lucide="smartphone"></i>
+                        </div>
+                        <div class="detail-content">
+                            <label>Nomor HP / WhatsApp</label>
+                            @if($massa->no_hp)
+                                <a href="https://wa.me/{{ preg_replace('/^0/', '62', preg_replace('/[^0-9]/', '', $massa->no_hp)) }}" target="_blank" class="contact-link">
+                                    {{ $massa->no_hp }} <i data-lucide="external-link" style="width: 14px;"></i>
+                                </a>
+                            @else
+                                <p>-</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="detail-row">
+                        <div class="detail-icon">
+                            <i data-lucide="mail"></i>
+                        </div>
+                        <div class="detail-content">
+                            <label>Email</label>
+                            @if($massa->email)
+                                <a href="mailto:{{ $massa->email }}" class="contact-link">
+                                    {{ $massa->email }}
+                                </a>
+                            @else
+                                <p>-</p>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Danger Zone for Delete -->
+            <div class="card" style="border-color: rgba(239, 68, 68, 0.3);">
+                <div class="card-body">
+                    <button type="button" class="btn btn-danger btn-block" style="width: 100%; justify-content: center;"
+                        onclick="if(confirm('Apakah anda yakin ingin menghapus data ini? Aksi ini tidak dapat dibatalkan.')) document.getElementById('delete-form').submit();">
+                        <i data-lucide="trash-2"></i>
+                        Hapus Data Massa
+                    </button>
+                    <form id="delete-form" action="{{ route('massa.destroy', $massa) }}" method="POST" style="display: none;">
+                        @csrf
+                        @method('DELETE')
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Location & Activity -->
+        <div class="col-right">
+            <!-- Location Card -->
+            <div class="card">
+                <div class="card-header border-bottom">
+                    <h3 class="card-title">
+                        <i data-lucide="map-pin" style="color: var(--danger);"></i>
+                        Lokasi & Alamat
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="detail-content" style="margin-bottom: 20px;">
+                        <label>Alamat Lengkap</label>
+                        <p style="font-size: 1.1em; line-height: 1.5;">{{ $massa->alamat }}</p>
+                    </div>
+
+                    <div class="location-grid">
+                        <div class="location-item">
+                            <label>RT/RW</label>
+                            <p>{{ $massa->rt ?? '-' }} / {{ $massa->rw ?? '-' }}</p>
+                        </div>
+                        <div class="location-item">
+                            <label>Kelurahan</label>
+                            <p>{{ $massa->village->name ?? '-' }}</p>
+                        </div>
+                        <div class="location-item">
+                            <label>Kecamatan</label>
+                            <p>{{ $massa->district->name ?? '-' }}</p>
+                        </div>
+                        <div class="location-item">
+                            <label>Kabupaten/Kota</label>
+                            <p>{{ $massa->regency->name ?? '-' }}</p>
+                        </div>
+                        <div class="location-item">
+                            <label>Provinsi</label>
+                            <p>{{ $massa->province->name ?? '-' }}</p>
+                        </div>
+                        <div class="location-item">
+                            <label>Kode Pos</label>
+                            <p>{{ $massa->kode_pos ?? '-' }}</p>
+                        </div>
+                    </div>
+
+                    @if($massa->latitude)
+                        <div class="map-preview">
+                            <div class="map-info">
+                                <i data-lucide="map"></i>
+                                <span>{{ $massa->latitude }}, {{ $massa->longitude }}</span>
+                                <span class="badge badge-success" style="margin-left: auto;">Geocoded</span>
+                            </div>
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ $massa->latitude }},{{ $massa->longitude }}" target="_blank" class="btn btn-sm btn-secondary" style="width: 100%; justify-content: center; margin-top: 12px;">
+                                Buka di Google Maps
+                            </a>
+                        </div>
+                    @else
+                         <div class="alert alert-warning" style="margin-top: 16px; font-size: 0.9em;">
+                            <i data-lucide="alert-triangle" style="width: 16px;"></i>
+                            <span>Belum ada koordinat lokasi.</span>
                         </div>
                     @endif
                 </div>
             </div>
 
-            <!-- Loyalty Stats -->
-            @if($massa->loyalty)
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">⭐ Loyalitas</h3>
-                    </div>
-                    <div class="card-body">
-                        <div class="loyalty-stats">
-                            <div class="loyalty-stat">
-                                <div class="loyalty-value">{{ $massa->loyalty->total_events }}</div>
-                                <div class="loyalty-label">Event Dihadiri</div>
-                            </div>
-                            <div class="loyalty-stat">
-                                <div class="loyalty-value">{{ $massa->loyalty->total_checkins }}</div>
-                                <div class="loyalty-label">Total Check-in</div>
-                            </div>
-                            <div class="loyalty-stat">
-                                <div class="loyalty-value">{{ $massa->loyalty->prizes_won }}</div>
-                                <div class="loyalty-label">Hadiah Dimenangkan</div>
-                            </div>
-                        </div>
-                        <div style="text-align: center; margin-top: 16px;">
-                            <span class="badge" style="font-size: 16px; padding: 8px 20px; 
-                                background: {{ $massa->loyalty->tier === 'platinum' ? 'linear-gradient(135deg, #94a3b8, #475569)' : 
-                                    ($massa->loyalty->tier === 'gold' ? 'linear-gradient(135deg, #fbbf24, #f59e0b)' : 
-                                    ($massa->loyalty->tier === 'silver' ? 'linear-gradient(135deg, #9ca3af, #6b7280)' : 'var(--bg-tertiary)')) }}; 
-                                color: {{ in_array($massa->loyalty->tier, ['gold', 'platinum']) ? '#000' : 'var(--text-primary)' }};">
-                                {{ strtoupper($massa->loyalty->tier) }}
-                            </span>
-                        </div>
-                    </div>
+            <!-- Event History Card -->
+            <div class="card">
+                <div class="card-header border-bottom" style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 class="card-title">
+                        <i data-lucide="history" style="color: var(--warning);"></i>
+                        Riwayat Event
+                    </h3>
+                    @if($massa->loyalty)
+                        <span class="badge" style="background: linear-gradient(135deg, #fbbf24, #dfa206); color: #000; border: none;">
+                            {{ $massa->loyalty->total_events }} Event
+                        </span>
+                    @endif
                 </div>
-            @endif
-        </div>
-    </div>
-
-    <!-- Event History -->
-    <div class="card" style="margin-top: 24px;">
-        <div class="card-header">
-            <h3 class="card-title">📅 Riwayat Event</h3>
-        </div>
-        <div class="card-body" style="padding: 0;">
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th>Event</th>
-                        <th>Tanggal</th>
-                        <th>No Tiket</th>
-                        <th>Status</th>
-                        <th>Kehadiran</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($massa->registrations as $reg)
-                        <tr>
-                            <td>
-                                <a href="{{ route('events.show', $reg->event) }}" style="color: var(--primary);">
-                                    <strong>{{ $reg->event->name }}</strong>
-                                </a>
-                                <br><span style="font-size: 12px; color: var(--text-muted);">{{ $reg->event->venue_name }}</span>
-                            </td>
-                            <td>{{ $reg->event->event_start->format('d M Y') }}</td>
-                            <td><code>{{ $reg->ticket_number }}</code></td>
-                            <td>
-                                <span class="badge badge-{{ $reg->registration_status === 'confirmed' ? 'success' : 'warning' }}">
-                                    {{ ucfirst($reg->registration_status) }}
-                                </span>
-                            </td>
-                            <td>
-                                @if($reg->attendance_status === 'checked_in')
-                                    <span class="badge badge-success">
-                                        ✓ {{ $reg->checked_in_at?->format('H:i') }}
-                                    </span>
+                <div class="card-body" style="padding: 0;">
+                    @if($massa->registrations && $massa->registrations->count() > 0)
+                        <div class="event-list">
+                            @foreach($massa->registrations->take(5) as $reg)
+                                @if($reg->event)
+                                <div class="event-item">
+                                    <div class="event-date">
+                                        <div class="day">{{ $reg->event->event_start->format('d') }}</div>
+                                        <div class="month">{{ $reg->event->event_start->format('M') }}</div>
+                                    </div>
+                                    <div class="event-details">
+                                        <h4>{{ $reg->event->name }}</h4>
+                                        <div class="event-meta">
+                                            <span>
+                                                <i data-lucide="map-pin" style="width: 12px;"></i> {{ $reg->event->venue_name ?? 'Lokasi tidak tersedia' }}
+                                            </span>
+                                            <span>|</span>
+                                            <span class="{{ $reg->attendance_status == 'checked_in' ? 'text-success' : 'text-secondary' }}">
+                                                {{ $reg->attendance_status == 'checked_in' ? 'Hadir' : 'Terdaftar' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
                                 @else
-                                    <span class="badge badge-secondary">-</span>
+                                <div class="event-item" style="opacity: 0.6;">
+                                    <div class="event-date" style="background: var(--bg-input);">
+                                        <div class="day">-</div>
+                                        <div class="month">-</div>
+                                    </div>
+                                    <div class="event-details">
+                                        <h4 style="color: var(--text-muted); font-style: italic;">Event Telah Dihapus</h4>
+                                        <div class="event-meta">
+                                            <span>ID: {{ $reg->event_id }}</span>
+                                        </div>
+                                    </div>
+                                </div>
                                 @endif
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="5" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                                Belum ada riwayat event
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                            @endforeach
+                        </div>
+                    @else
+                        <div style="padding: 40px; text-align: center; color: var(--text-muted);">
+                            <i data-lucide="calendar-off" style="width: 32px; height: 32px; margin-bottom: 8px; opacity: 0.5;"></i>
+                            <p>Belum ada riwayat event.</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
     </div>
 @endsection
 
 @push('styles')
 <style>
-    .profile-header {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 24px;
-        padding-bottom: 24px;
-        border-bottom: 1px solid var(--border-color);
+    .border-bottom {
+        border-bottom: 1px solid var(--border-light);
     }
 
-    .profile-avatar {
-        width: 80px;
-        height: 80px;
-        background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-        border-radius: 50%;
+    .profile-grid {
+        display: grid;
+        grid-template-columns: 350px 1fr;
+        gap: 24px;
+    }
+
+    @media (max-width: 1024px) {
+        .profile-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .card {
+        margin-bottom: 24px;
+        height: fit-content;
+    }
+
+    .card-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .card-title i {
+        width: 20px;
+        height: 20px;
+    }
+
+    .detail-row {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 20px;
+    }
+
+    .detail-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .detail-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: var(--bg-tertiary);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 28px;
-        font-weight: 700;
-        color: white;
-        text-transform: uppercase;
+        color: var(--text-secondary);
+        flex-shrink: 0;
     }
 
-    .profile-info h2 {
-        font-size: 24px;
+    .detail-content {
+        flex: 1;
+    }
+
+    .detail-content label {
+        display: block;
+        font-size: 13px;
+        color: var(--text-muted);
         margin-bottom: 4px;
     }
 
-    .profile-info p {
-        color: var(--text-secondary);
+    .detail-content p {
+        font-size: 15px;
+        color: var(--text-primary);
+        font-weight: 500;
+        margin: 0;
     }
 
-    .detail-list {
-        display: flex;
-        flex-direction: column;
-        gap: 16px;
+    .contact-link {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: opacity 0.2s;
     }
 
-    .detail-item {
-        display: flex;
-        gap: 16px;
+    .contact-link:hover {
+        opacity: 0.8;
+        text-decoration: underline;
     }
 
-    .detail-label {
-        min-width: 140px;
-        font-size: 14px;
-        color: var(--text-muted);
-    }
-
-    .detail-value {
-        flex: 1;
-        font-size: 14px;
-    }
-
-    .address-hierarchy {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-top: 12px;
-    }
-
-    .address-hierarchy span {
+    /* Location Grid */
+    .location-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
         background: var(--bg-tertiary);
-        padding: 4px 12px;
-        border-radius: 9999px;
+        padding: 20px;
+        border-radius: var(--radius);
+        margin-bottom: 20px;
+        border: 1px solid var(--border-light);
+    }
+
+    .location-item label {
+        display: block;
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .location-item p {
+        font-size: 14px;
+        color: var(--text-primary);
+        font-weight: 600;
+        margin: 0;
+    }
+
+    .map-preview {
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--bg-secondary);
+        padding: 12px;
+        border: 1px solid var(--border-color);
+    }
+    
+    .map-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-family: monospace;
         font-size: 13px;
     }
 
-    .loyalty-stats {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
+    /* Event List */
+    .event-list {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .event-item {
+        display: flex;
         gap: 16px;
-    }
-
-    .loyalty-stat {
-        text-align: center;
         padding: 16px;
+        border-bottom: 1px solid var(--border-light);
+        transition: background 0.2s;
+    }
+
+    .event-item:last-child {
+        border-bottom: none;
+    }
+
+    .event-item:hover {
         background: var(--bg-tertiary);
-        border-radius: var(--radius);
     }
 
-    .loyalty-value {
-        font-size: 28px;
+    .event-date {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        line-height: 1;
+    }
+
+    .event-date .day {
+        font-size: 18px;
         font-weight: 700;
-        color: var(--primary);
+        color: var(--text-primary);
     }
 
-    .loyalty-label {
-        font-size: 12px;
+    .event-date .month {
+        font-size: 11px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        font-weight: 600;
+        margin-top: 2px;
+    }
+
+    .event-details h4 {
+        margin: 0 0 6px 0;
+        font-size: 15px;
+        color: var(--text-primary);
+    }
+
+    .event-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
         color: var(--text-muted);
     }
 
-    code {
-        background: var(--bg-tertiary);
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        font-family: monospace;
-    }
+    .text-success { color: var(--success); }
+    .text-muted { color: var(--text-muted); }
 </style>
 @endpush
+
+

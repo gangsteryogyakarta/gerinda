@@ -132,6 +132,132 @@
     <audio id="error-sound" preload="auto">
         <source src="data:audio/wav;base64,UklGRigCAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQCAACAgICAgICAgICAgICAgICAgICAgICAgHx4eHh4eHx8fHx4eHh8gIB8eHh4eHx8fHx4eHh8gIB8eHh4eHx8fHx4eHh8gIB8eHh4eHyAgHx4eHh4fICAeHh4eHh8gICAgHh4eHyAgICAeHh4fICAgIB4eHh8gICAgHh4eHx8fHyAeHh4fHx8fIB4eHh8fHx8gHh4eHx8fHyAeHh4fHx8fIB4eHh8fHx8gHh4eHx4eHyAeHh4fHh4fIB4eHh8eHh8gHh4eHx4eHyAeHh4fHh4fICAgHx4eHh8gIB8eHh4fICAfHh4eHyAgHx4eHh8gIB8eHh4" type="audio/wav">
     </audio>
+    <!-- Camera Help Modal -->
+    <div id="camera-help-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📷 Mengaktifkan Kamera di HTTP</h3>
+                <button onclick="closeCameraHelp()" class="close-btn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Google Chrome memblokir akses kamera pada alamat IP (HTTP). Ikuti langkah ini untuk mengizinkan:</p>
+                <ol>
+                    <li>Buka tab baru di Chrome, ketik/copy:
+                        <div class="code-box">chrome://flags/#unsafely-treat-insecure-origin-as-secure</div>
+                    </li>
+                    <li>Pada bagian <strong>"Insecure origins treated as secure"</strong>, pilih <strong>Enabled</strong>.</li>
+                    <li>Di kolom teks di bawahnya, masukkan alamat IP ini:
+                        <div class="code-box">{{ request()->getSchemeAndHttpHost() }}</div>
+                    </li>
+                    <li>Klik tombol <strong>Relaunch</strong> di pojok kanan bawah.</li>
+                    <li>Setelah reload, coba scan lagi.</li>
+                </ol>
+                <div class="alert-warning">
+                    <i class="lucide-alert-triangle"></i>
+                    <small>Cara ini aman untuk penggunaan internal panitia.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeCameraHelp()" class="btn-primary-modal">Saya Mengerti</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 500px;
+            color: #fff;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+        .modal-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-body {
+            padding: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .modal-footer {
+            padding: 16px 20px;
+            border-top: 1px solid #333;
+            text-align: right;
+        }
+        .code-box {
+            background: #000;
+            padding: 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            margin: 6px 0;
+            word-break: break-all;
+            user-select: all;
+            border: 1px solid #333;
+            color: #4ade80;
+        }
+        ol { padding-left: 20px; margin: 0; }
+        li { margin-bottom: 12px; }
+        .close-btn { background: none; border: none; color: #888; font-size: 24px; cursor: pointer; }
+        .btn-primary-modal {
+            background: #ef4444; /* Gerindra Red */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .alert-warning {
+            background: rgba(234, 179, 8, 0.1);
+            color: #eab308;
+            padding: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .camera-error {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            text-align: center;
+        }
+        .text-danger { color: #ef4444; }
+        .btn-help-camera {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-help-camera:hover { background: rgba(255,255,255,0.2); }
+    </style>
 @endsection
 
 @push('styles')
@@ -248,13 +374,16 @@
         top: 50%;
         left: 50%;
         transform: translate(-50%, -50%);
-        background: var(--bg-secondary);
-        border-radius: var(--radius-xl);
-        padding: 48px 64px;
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 40px 32px;
         text-align: center;
-        z-index: 1000;
+        z-index: 9999;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        animation: popIn 0.3s ease;
+        border: 1px solid #e2e8f0;
+        width: 90%;
+        max-width: 420px;
+        animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     .checkin-result.hidden {
@@ -264,14 +393,15 @@
     .checkin-result.success .result-icon {
         width: 80px;
         height: 80px;
-        background: rgba(16, 185, 129, 0.15);
+        background: #dcfce7; /* Green 100 */
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 24px;
+        margin: 0 auto 20px;
         font-size: 40px;
-        color: var(--success);
+        color: #16a34a; /* Green 600 */
+        box-shadow: 0 0 0 8px #f0fdf4; /* Green 50 ring */
     }
 
     .checkin-result.success .result-icon::before {
@@ -281,14 +411,15 @@
     .checkin-result.error .result-icon {
         width: 80px;
         height: 80px;
-        background: rgba(239, 68, 68, 0.15);
+        background: #fee2e2; /* Red 100 */
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 24px;
+        margin: 0 auto 20px;
         font-size: 40px;
-        color: var(--danger);
+        color: #dc2626; /* Red 600 */
+        box-shadow: 0 0 0 8px #fef2f2; /* Red 50 ring */
     }
 
     .checkin-result.error .result-icon::before {
@@ -296,18 +427,22 @@
     }
 
     .result-name {
-        font-size: 28px;
-        font-weight: 700;
-        margin-bottom: 8px;
+        font-size: 24px;
+        font-weight: 800;
+        margin-bottom: 12px;
+        color: #1e293b; /* Slate 800 */
+        line-height: 1.2;
     }
 
     .result-message {
-        color: var(--text-secondary);
+        color: #64748b; /* Slate 500 */
         font-size: 16px;
+        line-height: 1.5;
+        font-weight: 500;
     }
 
     @keyframes popIn {
-        0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        0% { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
         100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
     }
 
@@ -467,37 +602,156 @@
     document.addEventListener('DOMContentLoaded', function() {
         html5QrCode = new Html5Qrcode("qr-reader");
         
-        Html5Qrcode.getCameras().then(devices => {
-            if (devices && devices.length) {
-                const cameraId = devices[devices.length - 1].id; // Use last camera (usually back camera)
-                
-                html5QrCode.start(
-                    cameraId,
-                    {
-                        fps: 10,
-                        qrbox: { width: 250, height: 250 },
-                    },
-                    onScanSuccess,
-                    onScanFailure
-                );
+        // UI Elements
+        const statusEl = document.getElementById('scan-status');
+        
+        // Config
+        const config = {
+            fps: 10,
+            qrbox: function(viewfinderWidth, viewfinderHeight) {
+                const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                const qrBoxSize = Math.floor(minEdge * 0.8);
+                return { width: qrBoxSize, height: qrBoxSize };
+            },
+            aspectRatio: 1.0
+        };
+        
+        // Helper to update status
+        const setStatus = (msg, icon = 'loader-2', animate = false) => {
+            statusEl.innerHTML = `<i class="lucide-${icon}" ${animate ? 'style="animation: spin 1s linear infinite;"' : ''}></i><span>${msg}</span>`;
+            statusEl.style.display = 'flex';
+            if(typeof lucide !== 'undefined') lucide.createIcons();
+        };
+
+        const showStartButton = () => {
+             statusEl.innerHTML = `
+                <div style="text-align:center;">
+                    <div style="margin-bottom:8px;">Kamera Siap</div>
+                    <button id="btn-start-cam" class="btn btn-primary" style="padding: 8px 16px; font-size: 14px;">
+                        <i class="lucide-camera"></i> Buka Kamera
+                    </button>
+                    <div id="debug-log" style="font-size:10px; color:#666; margin-top:5px; max-width:200px; overflow-wrap:anywhere;"></div>
+                </div>
+             `;
+             statusEl.style.display = 'flex';
+             if(typeof lucide !== 'undefined') lucide.createIcons();
+             
+             document.getElementById('btn-start-cam').addEventListener('click', () => {
+                 setStatus('Memulai Kamera...', 'loader-2', true);
+                 startCameraSequence();
+             });
+        };
+
+        const logDebug = (msg) => {
+            console.log(msg);
+            // Append to debug log if it exists (for mobile debugging)
+            const logEl = document.getElementById('debug-log');
+            if (logEl) logEl.innerHTML += `<div>${msg}</div>`;
+        };
+
+        // Helper to start camera with optional config overrides
+        const startCamera = (facingMode, customConfig = null) => {
+            return html5QrCode.start(
+                { facingMode: facingMode }, 
+                customConfig || config, 
+                onScanSuccess, 
+                onScanFailure
+            );
+        };
+
+        // Camera Sequence
+        const startCameraSequence = async () => {
+            try {
+                logDebug('Attempting environment camera...');
+                await startCamera("environment");
+                logDebug('Camera started!');
+                statusEl.style.display = 'none'; 
+            } catch (err) {
+                logDebug('Env cam failed: ' + err);
+                try {
+                    logDebug('Attempting user camera (relaxed config)...');
+                    // Retry with generic config (no specific qrbox sizing constraints)
+                    // to avoid OverconstrainedError on some webcams
+                    const laxConfig = { fps: 10, aspectRatio: 1.0 }; 
+                    await startCamera("user", laxConfig);
+                    logDebug('Camera started!');
+                    statusEl.style.display = 'none';
+                } catch (err2) {
+                    logDebug('All failed: ' + err2);
+                    handleCameraError(err2);
+                }
             }
-        }).catch(err => {
-            console.error('Error getting cameras:', err);
-            document.getElementById('scan-status').innerHTML = '<i class="lucide-camera-off"></i><span>Kamera tidak tersedia</span>';
-        });
+        };
+
+        // Do not auto-start, show button instead to respect User Gesture policies
+        showStartButton();
+
 
         // Manual input form
         document.getElementById('manual-checkin-form').addEventListener('submit', function(e) {
             e.preventDefault();
             const ticketNumber = document.getElementById('ticket-input').value.trim();
-            if (ticketNumber) {
-                processCheckin(ticketNumber);
-            }
+            if (ticketNumber) ticketNumber.includes('http') ? onScanSuccess(ticketNumber) : processCheckin(ticketNumber);
         });
-
-        // Auto-refresh stats
-        setInterval(refreshStats, 10000);
     });
+
+    function handleCameraError(err) {
+        let errorMessage = 'Kamera tidak tersedia';
+        let helpBtn = '';
+        
+        // Show raw error for debugging
+        const rawError = err ? `${err.name}: ${err.message}` : 'Unknown Error';
+        
+        if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+            errorMessage += '<br><small class="text-danger">Browser memblokir kamera karena koneksi tidak aman (HTTP).</small>';
+            helpBtn = '<button onclick="showCameraHelp()" class="btn-help-camera"><i class="lucide-help-circle"></i> Solusi: Aktifkan Kamera</button>';
+        } else {
+            errorMessage += '<br><small>(Periksa izin kamera di browser)</small>';
+            
+            // Add friendly detail based on error name
+            if (err?.name === 'NotAllowedError') {
+                 errorMessage += '<br><small class="text-danger">Akses ditolak oleh pengguna.</small>';
+            } else if (err?.name === 'NotFoundError') {
+                 errorMessage += '<br><small class="text-danger">Perangkat kamera tidak ditemukan.</small>';
+            } else if (err?.name === 'NotReadableError') {
+                 errorMessage += '<br><small class="text-danger">Kamera sedang digunakan aplikasi lain.</small>';
+            } else if (err?.name === 'OverconstrainedError') {
+                 errorMessage += '<br><small class="text-danger">Kamera tidak mendukung resolusi yang diminta.</small>';
+            } else if (err?.name === 'StreamApiNotSupportedError') {
+                 errorMessage += '<br><small class="text-danger">Browser tidak mendukung akses kamera ini.</small>';
+            }
+            
+            // Append raw error debug info
+            errorMessage += `<br><small style="color:#666; font-size:10px; margin-top:5px; border-top:1px solid #444; padding-top:4px;">Debug: ${rawError}</small>`;
+        }
+        
+        const statusEl = document.getElementById('scan-status');
+        statusEl.innerHTML = `<div class="camera-error">
+            <i class="lucide-camera-off"></i>
+            <span>${errorMessage}</span>
+            ${helpBtn}
+            <button onclick="location.reload()" class="btn btn-sm btn-secondary" style="margin-top:10px; font-size:12px;">Reset / Reload</button>
+        </div>`;
+        statusEl.style.display = 'flex';
+        statusEl.style.justifyContent = 'center';
+        if(typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+
+
+    // ... existing functions ...
+    
+    // Help Modal Logic
+    function showCameraHelp() {
+        document.getElementById('camera-help-modal').style.display = 'flex';
+    }
+    
+    function closeCameraHelp() {
+        document.getElementById('camera-help-modal').style.display = 'none';
+    }
+
+    // End of helpers
+
 
     function onScanSuccess(decodedText, decodedResult) {
         if (isProcessing) return;

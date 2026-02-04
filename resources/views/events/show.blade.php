@@ -4,7 +4,7 @@
 
 @section('content')
     <!-- Header -->
-    <div class="page-header">
+    <div class="page-header" style="flex-direction: column; align-items: flex-start; gap: 20px;">
         <div class="page-header-left">
             <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
                 <span class="badge badge-{{ $event->status === 'published' ? 'success' : ($event->status === 'ongoing' ? 'warning' : ($event->status === 'draft' ? 'info' : 'secondary')) }}" style="font-size: 14px; padding: 6px 12px;">
@@ -21,7 +21,7 @@
                 <span>📅 {{ $event->event_start->format('d M Y, H:i') }} WIB</span>
             </p>
         </div>
-        <div class="page-header-right" style="display: flex; gap: 12px;">
+        <div class="page-header-right" style="width: 100%; display: flex; gap: 12px; border-top: 1px solid var(--border-light); padding-top: 20px; justify-content: flex-start;">
             <a href="{{ route('events.edit', $event) }}" class="btn btn-secondary">
                 <i data-lucide="edit"></i>
                 Edit
@@ -31,7 +31,7 @@
                 Cetak Tiket
             </a>
             <a href="{{ route('events.registrations', $event) }}" class="btn btn-primary">
-                <i class="lucide-users"></i>
+                <i data-lucide="eye"></i>
                 Lihat Peserta
             </a>
         </div>
@@ -180,20 +180,14 @@
                     <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
                         @if($event->enable_checkin)
                             <a href="{{ route('checkin.event', $event) }}" class="btn btn-success">
-                                <i class="lucide-scan"></i>
+                                <i data-lucide="check-circle"></i>
                                 Mulai Check-in
                             </a>
                         @endif
                         
 
 
-                        <form action="{{ route('events.batch-tickets', $event) }}" method="POST" style="display: inline;">
-                            @csrf
-                            <button type="submit" class="btn btn-secondary">
-                                <i class="lucide-ticket"></i>
-                                Generate Tiket
-                            </button>
-                        </form>
+
                     </div>
 
                     <!-- Share Link -->

@@ -73,40 +73,13 @@ class RolePermissionSeeder extends Seeder
         $superAdmin->givePermissionTo(Permission::all());
 
         $admin = Role::firstOrCreate(['name' => 'admin']);
-        $admin->givePermissionTo([
-            'event.view', 'event.create', 'event.edit', 'event.publish',
-            'registration.view', 'registration.create', 'registration.edit', 'registration.export',
-            'checkin.perform', 'checkin.override', 'checkin.view_stats',
-            'lottery.view', 'lottery.draw', 'lottery.manage_prizes',
-            'massa.view', 'massa.create', 'massa.edit', 'massa.export',
-            'report.view', 'report.export',
-        ]);
+        // Admin gets all permissions EXCEPT user management and system settings
+        $adminPermissions = Permission::where('name', 'not like', 'user.%')
+            ->where('name', 'not like', 'settings.%')
+            ->get();
+        $admin->syncPermissions($adminPermissions);
 
-        $operator = Role::firstOrCreate(['name' => 'operator']);
-        $operator->givePermissionTo([
-            'event.view',
-            'registration.view', 'registration.create',
-            'checkin.perform', 'checkin.view_stats',
-            'lottery.view',
-            'massa.view', 'massa.create',
-            'report.view',
-        ]);
-
-        $checkinOfficer = Role::firstOrCreate(['name' => 'checkin-officer']);
-        $checkinOfficer->givePermissionTo([
-            'event.view',
-            'registration.view',
-            'checkin.perform', 'checkin.view_stats',
-        ]);
-
-        $viewer = Role::firstOrCreate(['name' => 'viewer']);
-        $viewer->givePermissionTo([
-            'event.view',
-            'registration.view',
-            'checkin.view_stats',
-            'massa.view',
-            'report.view',
-        ]);
+        // Legacy roles removed: operator, checkin-officer, viewer
 
         // Create default super admin user
         $superAdminUser = User::firstOrCreate(
@@ -118,14 +91,6 @@ class RolePermissionSeeder extends Seeder
         );
         $superAdminUser->assignRole('super-admin');
 
-        // Create sample operator
-        $operatorUser = User::firstOrCreate(
-            ['email' => 'operator@gerindra.or.id'],
-            [
-                'name' => 'Operator',
-                'password' => Hash::make('operator2024'),
-            ]
-        );
-        $operatorUser->assignRole('operator');
+        // Operator sample user removed
     }
 }

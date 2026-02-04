@@ -24,26 +24,38 @@ class ReportController extends Controller
                 DB::raw('SUM(CASE WHEN attendance_status = "checked_in" THEN 1 ELSE 0 END) as checkins')
             )
             ->whereYear('created_at', now()->year)
+            ->whereHas('massa')
+            ->whereHas('event')
             ->groupBy(DB::raw('MONTH(created_at)'))
             ->orderBy('month')
             ->get();
 
-        // Event performance
+        // Event performance (Include Published)
         $eventPerformance = Event::withCount([
-                'registrations',
-                'registrations as confirmed_count' => fn($q) => $q->where('registration_status', 'confirmed'),
-                'registrations as checkedin_count' => fn($q) => $q->where('attendance_status', 'checked_in'),
-            ])
-            ->whereIn('status', ['ongoing', 'completed'])
+            'registrations' => fn($q) => $q->whereHas('massa'),
+            'registrations as confirmed_count' => fn($q) => $q->where('registration_status', 'confirmed')->whereHas('massa'),
+            'registrations as checkedin_count' => fn($q) => $q->where('attendance_status', 'checked_in')->whereHas('massa'),
+        ])
+            ->whereIn('status', ['published', 'ongoing', 'completed'])
+            ->orderByRaw("FIELD(status, 'ongoing', 'published', 'completed')")
             ->orderByDesc('event_start')
             ->limit(10)
             ->get();
 
-        // Top provinces
-        $provinceStats = Massa::select('province_id', DB::raw('count(*) as total'))
-            ->whereNotNull('province_id')
-            ->groupBy('province_id')
-            ->with('province:id,name')
+        // Top Districts (Kecamatan)
+        $districtStats = Massa::select('district_id', DB::raw('count(*) as total'))
+            ->whereNotNull('district_id')
+            ->groupBy('district_id')
+            ->with('district:id,name')
+            ->orderByDesc('total')
+            ->limit(10)
+            ->get();
+
+        // Top Villages (Kelurahan)
+        $villageStats = Massa::select('village_id', DB::raw('count(*) as total'))
+            ->whereNotNull('village_id')
+            ->groupBy('village_id')
+            ->with('village:id,name')
             ->orderByDesc('total')
             ->limit(10)
             ->get();
@@ -54,6 +66,8 @@ class ReportController extends Controller
                 DB::raw('COUNT(*) as total')
             )
             ->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])
+            ->whereHas('massa')
+            ->whereHas('event')
             ->groupBy(DB::raw('DATE(created_at)'))
             ->orderBy('date')
             ->get();
@@ -62,8 +76,8 @@ class ReportController extends Controller
         $stats = [
             'total_events' => Event::count(),
             'total_massa' => Massa::count(),
-            'total_registrations' => EventRegistration::count(),
-            'total_checkins' => CheckinLog::count(),
+            'total_registrations' => EventRegistration::whereHas('massa')->whereHas('event')->count(),
+            'total_checkins' => CheckinLog::whereHas('massa')->whereHas('event')->count(),
             'avg_attendance_rate' => $this->calculateAverageAttendanceRate(),
             'conversion_rate' => $this->calculateConversionRate(),
         ];
@@ -71,7 +85,8 @@ class ReportController extends Controller
         return view('reports.index', compact(
             'monthlyStats',
             'eventPerformance',
-            'provinceStats',
+            'districtStats',
+            'villageStats',
             'weeklyCheckins',
             'stats'
         ));
@@ -84,7 +99,9 @@ class ReportController extends Controller
     {
         $eventId = $request->input('event_id');
         
-        $query = EventRegistration::with(['massa', 'event']);
+        $query = EventRegistration::with(['massa', 'event'])
+            ->whereHas('massa')
+            ->whereHas('event');
         
         if ($eventId) {
             $query->where('event_id', $eventId);
@@ -139,8 +156,8 @@ class ReportController extends Controller
     private function calculateAverageAttendanceRate(): float
     {
         $events = Event::withCount([
-            'registrations as confirmed' => fn($q) => $q->confirmed(),
-            'registrations as checkedin' => fn($q) => $q->checkedIn(),
+            'registrations as confirmed' => fn($q) => $q->confirmed()->whereHas('massa'),
+            'registrations as checkedin' => fn($q) => $q->checkedIn()->whereHas('massa'),
         ])->whereIn('status', ['ongoing', 'completed'])->get();
 
         if ($events->isEmpty()) return 0;

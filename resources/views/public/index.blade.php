@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Daftar Event Partai Gerindra DI Yogyakarta - Pendaftaran Peserta">
     <title>Daftar Event - Partai Gerindra DI Yogyakarta</title>
+    <link rel="icon" type="image/png" href="{{ asset('img/logo-gerindra.png') }}">
+    <link rel="shortcut icon" href="{{ asset('img/logo-gerindra.png') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -41,18 +43,39 @@
 
         body {
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(180deg, #FEE2E2 0%, #FFFFFF 100%);
+            background-image: url('{{ asset('img/bg.jpg') }}');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
             color: var(--text-primary);
             min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 0;
         }
 
         .header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            background: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('{{ asset('img/banner.png') }}');
+            background-size: cover;
+            background-position: center;
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
             color: white;
-            padding: 2rem;
+            padding: 4rem 2rem;
             text-align: center;
             position: relative;
             overflow: hidden;
+            z-index: 10;
         }
 
         .header::before {
@@ -74,23 +97,61 @@
         }
 
         .logo {
-            width: 80px;
-            height: 80px;
+            width: 140px;
+            height: 140px;
             background: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1rem;
+            margin: 0 auto 1.5rem;
             font-size: 2rem;
             color: var(--primary);
             font-weight: 800;
             box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 2;
+        }
+
+        .login-btn-header {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .login-btn-header:hover {
+            background: white;
+            color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .header h1 {
-            font-size: 1.75rem;
-            font-weight: 700;
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 0.75rem;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            letter-spacing: -0.5px;
+        }
+
+        .header .subtitle {
+            font-size: 1.125rem;
+            font-weight: 500;
+            opacity: 0.9;
             margin-bottom: 0.5rem;
         }
 
@@ -114,6 +175,8 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 2rem 1rem;
+            position: relative;
+            z-index: 1;
         }
 
         .section-title {
@@ -123,12 +186,13 @@
 
         .section-title h2 {
             font-size: 1.5rem;
-            color: var(--text-primary);
+            color: #ffffff;
             margin-bottom: 0.5rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
         .section-title p {
-            color: var(--text-secondary);
+            color: rgba(255, 255, 255, 0.85);
         }
 
         .alert {
@@ -138,18 +202,20 @@
             display: flex;
             align-items: center;
             gap: 0.75rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
 
         .alert-error {
-            background: var(--primary-light);
-            color: var(--primary-dark);
-            border: 1px solid var(--primary);
+            background: rgba(220, 38, 38, 0.2);
+            color: #FCA5A5;
+            border: 1px solid rgba(220, 38, 38, 0.4);
         }
 
         .alert-info {
-            background: #DBEAFE;
-            color: #1E40AF;
-            border: 1px solid var(--info);
+            background: rgba(59, 130, 246, 0.2);
+            color: #93C5FD;
+            border: 1px solid rgba(59, 130, 246, 0.4);
         }
 
         .events-grid {
@@ -159,17 +225,20 @@
         }
 
         .event-card {
-            background: var(--bg-primary);
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-md);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
             overflow: hidden;
             transition: all 0.3s ease;
-            border: 1px solid var(--border-light);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .event-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
+            transform: translateY(-6px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.35);
         }
 
         .event-image {
@@ -217,8 +286,8 @@
         .event-category {
             display: inline-block;
             padding: 0.25rem 0.75rem;
-            background: var(--primary-light);
-            color: var(--primary);
+            background: rgba(220, 38, 38, 0.2);
+            color: #FCA5A5;
             font-size: 0.75rem;
             font-weight: 600;
             border-radius: 50px;
@@ -227,8 +296,8 @@
 
         .event-title {
             font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--text-primary);
+            font-weight: 700;
+            color: #ffffff;
             margin-bottom: 0.5rem;
             line-height: 1.3;
         }
@@ -245,13 +314,13 @@
             align-items: center;
             gap: 0.5rem;
             font-size: 0.875rem;
-            color: var(--text-secondary);
+            color: rgba(255, 255, 255, 0.75);
         }
 
         .event-meta-item svg {
             width: 16px;
             height: 16px;
-            color: var(--text-muted);
+            color: rgba(255, 255, 255, 0.5);
         }
 
         .event-quota {
@@ -259,25 +328,25 @@
             align-items: center;
             justify-content: space-between;
             padding: 0.75rem;
-            background: var(--bg-tertiary);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: var(--radius-md);
             margin-bottom: 1rem;
         }
 
         .quota-text {
             font-size: 0.875rem;
-            color: var(--text-secondary);
+            color: rgba(255, 255, 255, 0.75);
         }
 
         .quota-value {
             font-weight: 600;
-            color: var(--success);
+            color: #34D399;
         }
 
         .quota-bar {
             flex: 1;
             height: 6px;
-            background: var(--border-light);
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 3px;
             margin: 0 0.75rem;
             overflow: hidden;
@@ -285,7 +354,7 @@
 
         .quota-fill {
             height: 100%;
-            background: linear-gradient(90deg, var(--success) 0%, #34D399 100%);
+            background: linear-gradient(90deg, #10B981 0%, #34D399 100%);
             border-radius: 3px;
             transition: width 0.3s ease;
         }
@@ -325,15 +394,17 @@
         .empty-state {
             text-align: center;
             padding: 4rem 2rem;
-            background: var(--bg-primary);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-radius: var(--radius-lg);
-            border: 2px dashed var(--border-medium);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .empty-state-icon {
             width: 80px;
             height: 80px;
-            background: var(--bg-tertiary);
+            background: rgba(255, 255, 255, 0.15);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -344,31 +415,43 @@
         .empty-state-icon svg {
             width: 40px;
             height: 40px;
-            color: var(--text-muted);
+            color: rgba(255, 255, 255, 0.6);
         }
 
         .empty-state h3 {
             font-size: 1.25rem;
             margin-bottom: 0.5rem;
+            color: #ffffff;
         }
 
         .empty-state p {
-            color: var(--text-secondary);
+            color: rgba(255, 255, 255, 0.75);
         }
 
         .footer {
             text-align: center;
             padding: 2rem;
-            color: var(--text-secondary);
+            color: rgba(255, 255, 255, 0.65);
             font-size: 0.875rem;
+            position: relative;
+            z-index: 1;
         }
 
         .footer a {
-            color: var(--primary);
+            color: #FCA5A5;
             text-decoration: none;
         }
 
+        .footer a:hover {
+            color: #ffffff;
+        }
+
         @media (max-width: 768px) {
+            .header {
+                padding: 3rem 1.5rem;
+                background-position: center top;
+            }
+
             .header h1 {
                 font-size: 1.5rem;
             }
@@ -385,24 +468,34 @@
 </head>
 <body>
     <header class="header">
+        <a href="{{ route('login') }}" class="login-btn-header">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+                <polyline points="10 17 15 12 10 7"/>
+                <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+            Login
+        </a>
         <div class="header-content">
-            <div class="logo">G</div>
-            <h1>Pendaftaran Event Partai Gerindra</h1>
-            <p>Bergabunglah dalam kegiatan dan event kami</p>
-            <div class="location-badge">
+            <div class="logo">
+                <img src="{{ asset('img/logo-gerindra.png') }}" alt="Logo Gerindra" style="width: 60%; height: auto;">
+            </div>
+            <h1>Sugeng Rawuh!</h1>
+            <p class="subtitle">Situs Resmi DPD Partai Gerindra DIY</p>
+            <!-- <div class="location-badge">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
                     <circle cx="12" cy="10" r="3"/>
                 </svg>
                 DI Yogyakarta
-            </div>
+            </div> -->
         </div>
     </header>
 
     <main class="container">
         <div class="section-title">
-            <h2>Event yang Tersedia</h2>
-            <p>Pilih event yang ingin Anda ikuti dan lengkapi pendaftaran</p>
+            <h2>Kegiatan terdekat kami</h2>
+            <p>Daftarkan Diri Anda Segera</p>
         </div>
 
         @if(session('error'))
@@ -437,15 +530,19 @@
                     @endphp
                     <div class="event-card">
                         <div class="event-image">
-                            <span class="event-image-icon">🎪</span>
+                            @if($event->banner_image)
+                                <img src="{{ asset('storage/' . $event->banner_image) }}" alt="{{ $event->name }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            @else
+                                <span class="event-image-icon">🎪</span>
+                            @endif
                             <div class="event-date-badge">
                                 <div class="day">{{ $event->event_start->format('d') }}</div>
                                 <div class="month">{{ $event->event_start->translatedFormat('M Y') }}</div>
                             </div>
                         </div>
                         <div class="event-content">
-                            <span class="event-category">{{ $event->event_type ?? 'Event' }}</span>
-                            <h3 class="event-title">{{ $event->nama_event }}</h3>
+                            <span class="event-category">{{ $event->category->name ?? 'Event' }}</span>
+                            <h3 class="event-title">{{ $event->name }}</h3>
                             
                             <div class="event-meta">
                                 <div class="event-meta-item">
@@ -453,7 +550,7 @@
                                         <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
                                         <circle cx="12" cy="10" r="3"/>
                                     </svg>
-                                    {{ $event->lokasi ?? 'DI Yogyakarta' }}
+                                    {{ $event->venue_name ?? 'DI Yogyakarta' }}
                                 </div>
                                 <div class="event-meta-item">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

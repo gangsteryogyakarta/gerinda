@@ -88,6 +88,7 @@
             background-position: center;
             background-attachment: fixed;
             position: relative;
+            overflow-x: hidden; /* Prevent horizontal scroll */
         }
 
         .bg-overlay {
@@ -217,10 +218,15 @@
             stroke-width: 2;
         }
 
+        .nav-badge {
             font-weight: 700;
             padding: 2px 8px;
             border-radius: var(--radius-full);
             box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            font-size: 10px;
+            background: var(--primary);
+            color: white;
+            margin-left: auto;
         }
 
         .sidebar-footer {
@@ -267,10 +273,12 @@
         /* Main Content */
         .main-content {
             flex: 1;
-            margin-left: calc(var(--sidebar-width) + 40px);
+            margin-left: 320px; /* Fixed margin (280px sidebar + 40px gap) for stability */
             padding: 24px 32px 24px 0;
             position: relative;
             z-index: 1;
+            min-width: 0; /* Crucial for preventing flex item overflow */
+            width: calc(100% - 320px); /* Explicit width constraint */
         }
 
         /* Page Header */
@@ -369,115 +377,81 @@
         .stat-card {
             background: var(--bg-card);
             border-radius: var(--radius-lg);
-            padding: 24px;
+            padding: 16px 20px;
             box-shadow: var(--shadow);
             border: 1px solid var(--border-light);
             transition: all 0.3s ease;
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            gap: 16px;
         }
 
         .stat-card:hover {
             transform: translateY(-2px);
             box-shadow: var(--shadow-lg);
-        }
-
-        .stat-card-header {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            margin-bottom: 16px;
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         .stat-icon {
             width: 48px;
             height: 48px;
-            border-radius: var(--radius-lg);
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
+            flex-shrink: 0;
         }
 
         .stat-icon.primary {
-            background: rgba(220, 38, 38, 0.2);
+            background: rgba(220, 38, 38, 0.15);
             color: #EF4444;
             border: 1px solid rgba(220, 38, 38, 0.2);
         }
 
         .stat-icon.success {
-            background: var(--success-light);
-            color: var(--success);
+            background: rgba(16, 185, 129, 0.15);
+            color: #10B981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
         }
 
         .stat-icon.warning {
-            background: var(--warning-light);
-            color: var(--warning);
+            background: rgba(245, 158, 11, 0.15);
+            color: #F59E0B;
+            border: 1px solid rgba(245, 158, 11, 0.2);
         }
 
         .stat-icon.info {
-            background: var(--info-light);
-            color: var(--info);
+            background: rgba(59, 130, 246, 0.15);
+            color: #3B82F6;
+            border: 1px solid rgba(59, 130, 246, 0.2);
         }
 
         .stat-icon i {
             width: 24px;
             height: 24px;
+            stroke-width: 2.5;
         }
 
-        .stat-trend {
+        /* Compact Info */
+        .stat-info {
             display: flex;
-            align-items: center;
-            gap: 4px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .stat-trend.up {
-            color: var(--success);
-        }
-
-        .stat-trend.down {
-            color: var(--danger);
+            flex-direction: column;
         }
 
         .stat-value {
-            font-size: 32px;
+            font-size: 24px;
             font-weight: 800;
             color: var(--text-primary);
-            margin-bottom: 4px;
-            letter-spacing: -1px;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
         }
 
         .stat-label {
             font-size: 13px;
             color: var(--text-secondary);
             font-weight: 500;
-        }
-
-        .stat-progress {
-            margin-top: 16px;
-        }
-
-        .stat-progress-bar {
-            height: 6px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: var(--radius-full);
-            overflow: hidden;
-        }
-
-        .stat-progress-fill {
-            height: 100%;
-            border-radius: var(--radius-full);
-            background: var(--primary-gradient);
-            transition: width 0.5s ease;
-        }
-
-        .stat-progress-fill.success {
-            background: linear-gradient(90deg, #10B981, #059669);
-        }
-
-        .stat-progress-fill.warning {
-            background: linear-gradient(90deg, #F59E0B, #D97706);
         }
 
         /* Cards */
@@ -630,6 +604,32 @@
             transition: all 0.2s ease;
             text-decoration: none;
             white-space: nowrap;
+        }
+
+        /* Scroll Container */
+        .scroll-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        /* Custom Scrollbar */
+        .scroll-container::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .scroll-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+
+        .scroll-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
 
         .btn i {
@@ -926,8 +926,8 @@
                     <img src="{{ asset('img/logo-gerindra.png') }}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
                 </div>
                 <div class="sidebar-brand">
-                    <h1>GERINDRA</h1>
-                    <span>Event Management</span>
+                    <h1>GERINDRA DIY</h1>
+                    <span>Command Center</span>
                 </div>
             </div>
 
@@ -989,10 +989,10 @@
                         <span>Manajemen User</span>
                     </a>
                     @endcan
-                    <a href="{{ route('settings.index') }}" class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}">
+                    {{-- <a href="{{ route('settings.index') }}" class="nav-item {{ request()->routeIs('settings.*') ? 'active' : '' }}">
                         <i data-lucide="settings"></i>
                         <span>Pengaturan</span>
-                    </a>
+                    </a> --}}
                 </div>
             </nav>
 

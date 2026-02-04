@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\EventController;
 use App\Http\Controllers\Api\RegistrationController;
 use App\Http\Controllers\Api\CheckinController;
-use App\Http\Controllers\Api\LotteryController;
+// use App\Http\Controllers\Api\LotteryController;
 use App\Http\Controllers\Api\MassaController;
 
 /*
@@ -68,20 +68,20 @@ Route::prefix('v1')->middleware('throttle:60,1')->group(function () {
         Route::get('/events/{event}/hourly-checkins', [CheckinController::class, 'hourlyCheckins']);
         Route::get('/events/{event}/recent-checkins', [CheckinController::class, 'recentCheckins']);
         
-        // Lottery
-        Route::get('/events/{event}/lottery', [LotteryController::class, 'index']);
-        Route::get('/events/{event}/lottery/eligible', [LotteryController::class, 'eligibleCount']);
-        Route::get('/events/{event}/lottery/shuffle', [LotteryController::class, 'shuffleNames']);
-        Route::post('/events/{event}/lottery/draw', [LotteryController::class, 'draw']);
-        Route::post('/events/{event}/lottery/draw-multiple', [LotteryController::class, 'drawMultiple']);
-        Route::post('/lottery/{draw}/claim', [LotteryController::class, 'claim']);
-        Route::delete('/lottery/{draw}', [LotteryController::class, 'undoDraw']);
+        // // Lottery
+        // Route::get('/events/{event}/lottery', [LotteryController::class, 'index']);
+        // Route::get('/events/{event}/lottery/eligible', [LotteryController::class, 'eligibleCount']);
+        // Route::get('/events/{event}/lottery/shuffle', [LotteryController::class, 'shuffleNames']);
+        // Route::post('/events/{event}/lottery/draw', [LotteryController::class, 'draw']);
+        // Route::post('/events/{event}/lottery/draw-multiple', [LotteryController::class, 'drawMultiple']);
+        // Route::post('/lottery/{draw}/claim', [LotteryController::class, 'claim']);
+        // Route::delete('/lottery/{draw}', [LotteryController::class, 'undoDraw']);
         
-        // Lottery Prizes
-        Route::get('/events/{event}/prizes', [LotteryController::class, 'prizes']);
-        Route::post('/events/{event}/prizes', [LotteryController::class, 'createPrize']);
-        Route::put('/prizes/{prize}', [LotteryController::class, 'updatePrize']);
-        Route::delete('/prizes/{prize}', [LotteryController::class, 'deletePrize']);
+        // // Lottery Prizes
+        // Route::get('/events/{event}/prizes', [LotteryController::class, 'prizes']);
+        // Route::post('/events/{event}/prizes', [LotteryController::class, 'createPrize']);
+        // Route::put('/prizes/{prize}', [LotteryController::class, 'updatePrize']);
+        // Route::delete('/prizes/{prize}', [LotteryController::class, 'deletePrize']);
         
         // Massa
         Route::get('/massa', [MassaController::class, 'index']);

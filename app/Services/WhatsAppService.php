@@ -53,7 +53,7 @@ class WhatsAppService
             }
 
             return $result;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('WhatsApp Send Failed', [
                 'provider' => $this->provider,
                 'phone' => $phone,
@@ -198,7 +198,7 @@ class WhatsAppService
             }
 
             return $result;
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -344,8 +344,17 @@ class WhatsAppService
     /**
      * Get QR code
      */
+    /**
+     * Get QR code
+     */
     public function getQrCode(): array
     {
+        // Safety: Check if already connected before asking for QR
+        $status = $this->checkStatus();
+        if ($status['connected'] ?? false) {
+            return ['success' => false, 'error' => 'Device already connected'];
+        }
+
         try {
             if ($this->provider === 'baileys') {
                 $response = Http::timeout(5)->get($this->baseUrl . '/qr');
@@ -375,11 +384,12 @@ class WhatsAppService
                     ];
                 }
                 
-                return ['success' => false, 'error' => 'Failed to fetch QR'];
+                return ['success' => false, 'error' => 'Failed to fetch QR: ' . $response->status()];
             }
             
             return ['success' => false, 'error' => 'QR code not supported for this provider'];
         } catch (\Exception $e) {
+            Log::error('WhatsAppService getQrCode failed: ' . $e->getMessage());
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -387,69 +397,85 @@ class WhatsAppService
     /**
      * Start session
      */
+    /**
+     * Start session
+     */
     public function startSession(): array
     {
-        if ($this->provider === 'waha') {
-            $session = config('services.waha.session', 'gerindra');
-            
-            // 1. Check if session exists
-            $check = Http::withHeaders(['X-Api-Key' => $this->token])
-                ->get($this->baseUrl . '/api/sessions/' . $session);
-            
-            if ($check->successful()) {
-                $data = $check->json();
-                $status = $data['status'] ?? 'STOPPED';
+        try {
+            if ($this->provider === 'waha') {
+                $session = config('services.waha.session', 'gerindra');
+                
+                // 1. Check if session exists
+                $check = Http::withHeaders(['X-Api-Key' => $this->token])
+                    ->timeout(10)
+                    ->get($this->baseUrl . '/api/sessions/' . $session);
+                
+                if ($check->successful()) {
+                    $data = $check->json();
+                    $status = $data['status'] ?? 'STOPPED';
 
-                // If session is STOPPED or Stuck (STARTING/FAILED), force start/restart
-                if (in_array($status, ['STOPPED', 'STARTING', 'FAILED'])) {
-                    
-                    // If not stopped, stop it first to ensure clean start
-                    if ($status !== 'STOPPED') {
-                        Http::withHeaders(['X-Api-Key' => $this->token])
-                            ->post($this->baseUrl . '/api/sessions/' . $session . '/stop');
+                    // If session is STOPPED or Stuck (STARTING/FAILED), force start/restart
+                    if (in_array($status, ['STOPPED', 'STARTING', 'FAILED'])) {
+                        
+                        // If not stopped, stop it first to ensure clean start
+                        if ($status !== 'STOPPED') {
+                            Http::withHeaders(['X-Api-Key' => $this->token])
+                                ->timeout(10)
+                                ->post($this->baseUrl . '/api/sessions/' . $session . '/stop');
+                        }
+
+                        // Start Session
+                        $response = Http::withHeaders(['X-Api-Key' => $this->token])
+                            ->timeout(30) // Give more time for startup
+                            ->post($this->baseUrl . '/api/sessions/' . $session . '/start');
+                            
+                        return [
+                            'success' => $response->successful(),
+                            'message' => 'Session started',
+                            'data' => $response->json(),
+                        ];
                     }
-
-                    // Start Session
-                    $response = Http::withHeaders(['X-Api-Key' => $this->token])
-                        ->post($this->baseUrl . '/api/sessions/' . $session . '/start');
+                    
+                    return ['success' => true, 'message' => 'Session already running'];
+                } elseif ($check->status() === 404) {
+                    // 2. Session does not exist, create it
+                    $create = Http::withHeaders(['X-Api-Key' => $this->token])
+                        ->timeout(10)
+                        ->post($this->baseUrl . '/api/sessions', [
+                            'name' => $session,
+                            'config' => [
+                                'webhooks' => [
+                                    ['url' => config('app.url') . '/api/webhooks/whatsapp', 'events' => ['message', 'message.ack']]
+                                ]
+                            ]
+                        ]);
                         
                     return [
-                        'success' => $response->successful(),
-                        'message' => 'Session started',
-                        'data' => $response->json(),
+                        'success' => $create->successful(),
+                        'message' => $create->successful() ? 'Session created and started' : 'Failed to create session',
+                        'data' => $create->json(),
                     ];
                 }
-                
-                return ['success' => true, 'message' => 'Session already running'];
-            } elseif ($check->status() === 404) {
-                // 2. Session does not exist, create it
-                $create = Http::withHeaders(['X-Api-Key' => $this->token])
-                    ->post($this->baseUrl . '/api/sessions', [
-                        'name' => $session,
-                        'config' => [
-                            'webhooks' => [
-                                ['url' => config('app.url') . '/api/webhooks/whatsapp', 'events' => ['message', 'message.ack']]
-                            ]
-                        ]
-                    ]);
-                    
+
+                // Fallback (Legacy)
+                $response = Http::withHeaders(['X-Api-Key' => $this->token])
+                    ->timeout(10)
+                    ->post($this->baseUrl . '/api/sessions/' . $session . '/start');
                 return [
-                    'success' => $create->successful(),
-                    'message' => $create->successful() ? 'Session created and started' : 'Failed to create session',
-                    'data' => $create->json(),
+                    'success' => $response->successful(),
+                    'data' => $response->json(),
                 ];
             }
-
-            // Fallback (Legacy)
-            $response = Http::withHeaders(['X-Api-Key' => $this->token])
-                ->post($this->baseUrl . '/api/sessions/' . $session . '/start');
+            
+            return ['success' => true, 'message' => 'Auto-started for this provider'];
+        } catch (\Exception $e) {
+            Log::error('WhatsAppService startSession failed: ' . $e->getMessage());
             return [
-                'success' => $response->successful(),
-                'data' => $response->json(),
+                'success' => false,
+                'error' => 'Connection error: ' . $e->getMessage()
             ];
         }
-        
-        return ['success' => true, 'message' => 'Auto-started for this provider'];
     }
 
     /**
@@ -466,6 +492,13 @@ class WhatsAppService
                 ];
             } elseif ($this->provider === 'waha') {
                 $session = config('services.waha.session', 'default');
+                
+                // Try to Logout from WhatsApp (unlink device)
+                Http::timeout(10)
+                    ->withHeaders(['X-Api-Key' => $this->token])
+                    ->post($this->baseUrl . '/api/sessions/' . $session . '/logout');
+
+                // Then Stop the session
                 $response = Http::timeout(10)
                     ->withHeaders(['X-Api-Key' => $this->token])
                     ->post($this->baseUrl . '/api/sessions/' . $session . '/stop');
@@ -477,6 +510,7 @@ class WhatsAppService
             }
             return ['success' => false, 'error' => 'Logout not supported for this provider'];
         } catch (\Exception $e) {
+            Log::error('WhatsAppService logout failed: ' . $e->getMessage());
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -545,10 +579,19 @@ class WhatsAppService
         try {
             $data = $result['data'] ?? [];
             // WAHA: data contains 'id' directly or inside 'response'
-            $messageId = $data['id'] ?? ($data['response']['id'] ?? null);
+            $messageId = null;
             
-            if (!$messageId && isset($data['_id'])) {
+            if (isset($data['id'])) {
+                $messageId = $data['id'];
+            } elseif (isset($data['response']['id'])) {
+                $messageId = $data['response']['id'];
+            } elseif (isset($data['_id'])) {
                 $messageId = $data['_id'];
+            }
+
+            // Safety check: ensure messageId is scalar
+            if (is_array($messageId)) {
+                $messageId = json_encode($messageId);
             }
 
             WhatsappMessageLog::create([
@@ -560,7 +603,7 @@ class WhatsAppService
                 'campaign_id' => $context['campaign_id'] ?? null,
                 'sent_at' => now(),
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to log WhatsApp message', [
                 'error' => $e->getMessage(),
                 'phone' => $phone

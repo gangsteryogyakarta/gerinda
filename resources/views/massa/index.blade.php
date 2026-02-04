@@ -60,21 +60,34 @@
                     </div>
                     
                     <div class="form-group" style="min-width: 180px; margin: 0;">
-                        <select name="province" class="form-input">
-                            <option value="">Semua Provinsi</option>
-                            @foreach($provinces as $province)
-                                <option value="{{ $province->id }}" {{ request('province') == $province->id ? 'selected' : '' }}>
-                                    {{ $province->name }}
+                        <select name="district" id="district_filter" class="form-input">
+                            <option value="">Semua Kecamatan</option>
+                            @foreach(\App\Models\District::whereHas('regency', function($q){ $q->where('province_id', 34); })->orderBy('name')->get() as $district)
+                                <option value="{{ $district->id }}" {{ request('district') == $district->id ? 'selected' : '' }}>
+                                    {{ $district->name }}
                                 </option>
                             @endforeach
                         </select>
                     </div>
+
+                    <div class="form-group" style="min-width: 180px; margin: 0;">
+                        <select name="village" id="village_filter" class="form-input">
+                            <option value="">Semua Kelurahan</option>
+                            @if(request('district') && $villages->isNotEmpty())
+                                @foreach($villages as $village)
+                                    <option value="{{ $village->id }}" {{ request('village') == $village->id ? 'selected' : '' }}>
+                                        {{ $village->name }}
+                                    </option>
+                                @endforeach
+                            @endif
+                        </select>
+                    </div>
                     
                     <div class="form-group" style="min-width: 150px; margin: 0;">
-                        <select name="geocoded" class="form-input">
-                            <option value="">Geocoding</option>
-                            <option value="yes" {{ request('geocoded') == 'yes' ? 'selected' : '' }}>Sudah</option>
-                            <option value="no" {{ request('geocoded') == 'no' ? 'selected' : '' }}>Belum</option>
+                        <select name="kategori_massa" class="form-input">
+                            <option value="">Semua Kategori</option>
+                            <option value="Pengurus" {{ request('kategori_massa') == 'Pengurus' ? 'selected' : '' }}>Pengurus</option>
+                            <option value="Simpatisan" {{ request('kategori_massa') == 'Simpatisan' ? 'selected' : '' }}>Simpatisan</option>
                         </select>
                     </div>
                     
@@ -92,14 +105,14 @@
 
                     <div style="flex: 1;"></div> 
 
-                    <a href="{{ route('massa.export', request()->all()) }}" class="btn btn-secondary" title="Export CSV sesuai filter">
+                    <a href="{{ route('massa.export', request()->all()) }}" class="btn btn-secondary" title="Export Excel sesuai filter">
                         <i data-lucide="download"></i>
-                        Export
+                        Export Excel
                     </a>
                     
-                    <a href="{{ route('massa.import') }}" class="btn btn-secondary" title="Import Data CSV">
+                    <a href="{{ route('massa.import') }}" class="btn btn-secondary" title="Import Data Excel">
                         <i data-lucide="upload"></i>
-                        Import
+                        Import Excel
                     </a>
                 </div>
             </form>
@@ -108,12 +121,18 @@
 
     <!-- Massa Table -->
     <div class="card">
-        <div class="card-body" style="padding: 0;">
+        <div style="padding: 12px 16px; border-bottom: 1px solid var(--border-light); background: var(--bg-tertiary); display: flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--text-secondary);">
+            <i data-lucide="arrow-left-right" style="width: 16px; height: 16px;"></i>
+            <span>Geser tabel ke kanan untuk melihat informasi selengkapnya</span>
+        </div>
+        <div class="card-body" style="padding: 0; overflow-x: auto;">
             <table class="table">
                 <thead>
                     <tr>
                         <th>Nama</th>
                         <th>NIK</th>
+                        <th>Kategori</th>
+                        <th>Sub Kategori</th>
                         <th>No HP</th>
                         <th>Lokasi</th>
                         <th>Event</th>
@@ -138,7 +157,22 @@
                                     </div>
                                 </div>
                             </td>
-                            <td><code>{{ $item->nik }}</code></td>
+                            <td><span style="font-family: monospace; font-size: 14px;">{{ $item->nik }}</span></td>
+                            <td>
+                                <span class="badge badge-{{ $item->kategori_massa === 'Pengurus' ? 'primary' : 'secondary' }}" style="font-size: 14px;">
+                                    {{ $item->kategori_massa ?: 'Simpatisan' }}
+                                </span>
+                            </td>
+                            <td>
+                                @if(!empty(trim($item->sub_kategori)))
+                                    <span class="badge badge-info" style="font-size: 14px;">{{ $item->sub_kategori }}</span>
+                                @elseif($item->kategori_massa === 'Pengurus')
+                                    <span class="badge badge-warning" style="font-size: 12px;">(Data Kosong)</span>
+                                @else
+                                    <span style="color: var(--text-muted);">-</span>
+                                @endif
+                            </td>
+
                             <td>{{ $item->no_hp ?? '-' }}</td>
                             <td>
                                 @if($item->regency)
@@ -166,6 +200,13 @@
                                     <a href="{{ route('massa.edit', $item) }}" class="btn btn-sm btn-secondary" title="Edit">
                                         <i data-lucide="edit"></i>
                                     </a>
+                                    <form action="{{ route('massa.destroy', $item) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus data massa ini?');" style="display: inline;">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-secondary" style="color: #EF4444;" title="Hapus">
+                                            <i data-lucide="trash-2"></i>
+                                        </button>
+                                    </form>
                                 </div>
                             </td>
                         </tr>
@@ -340,10 +381,22 @@
         padding-right: 40px;
     }
 
-    /* Fix dropdown option visibility */
+    @media (max-width: 1024px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 640px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Fix dropdown option visibility - Override dark theme */
     select.form-input option {
-        background-color: #1f2937; /* Dark background for options */
-        color: #f3f4f6; /* Light text for options */
+        background-color: #ffffff !important;
+        color: #000000 !important;
         padding: 8px;
     }
 
@@ -358,17 +411,45 @@
         font-size: 12px;
         font-family: monospace;
     }
+</style>
 
-    @media (max-width: 1024px) {
-        .stats-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-    }
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const districtSelect = document.getElementById('district_filter');
+        const villageSelect = document.getElementById('village_filter');
 
-    @media (max-width: 640px) {
-        .stats-grid {
-            grid-template-columns: 1fr;
-        }
+        districtSelect.addEventListener('change', function() {
+            const districtId = this.value;
+            
+            // Clear current options
+            villageSelect.innerHTML = '<option value="">Semua Kelurahan</option>';
+            
+            if (districtId) {
+                // Disable while loading
+                villageSelect.disabled = true;
+                
+                // Fetch villages
+                fetch(`/api/v1/locations/villages/${districtId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        data.forEach(village => {
+                            const option = document.createElement('option');
+                            option.value = village.id;
+                            option.textContent = village.name;
+                            villageSelect.appendChild(option);
+                        });
+                        villageSelect.disabled = false;
+                    })
+                    .catch(error => {
+                        console.error('Error fetching villages:', error);
+                        villageSelect.disabled = false;
+                    });
+            }
+        });
+    });
+</script>
+@endpush
     }
 </style>
 @endpush

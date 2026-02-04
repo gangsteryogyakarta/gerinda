@@ -97,9 +97,9 @@
                                 </div>
                             </td>
                             <td>
-                                <div>{{ $ticket->event->name ?? '-' }}</div>
+                                <div>{{ $ticket->event->name ?? '(Event Terhapus)' }}</div>
                                 <div style="font-size: 12px; color: var(--text-muted);">
-                                    {{ $ticket->event->event_start ? $ticket->event->event_start->format('d M Y') : '-' }}
+                                    {{ optional($ticket->event)->event_start ? $ticket->event->event_start->format('d M Y') : '-' }}
                                 </div>
                             </td>
                             <td>

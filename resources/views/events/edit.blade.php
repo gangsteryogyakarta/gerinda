@@ -208,12 +208,12 @@
                             </label>
                         </div>
 
-                        <div class="form-group">
+                        <!-- <div class="form-group">
                             <label class="form-checkbox">
                                 <input type="checkbox" name="enable_lottery" value="1" {{ old('enable_lottery', $event->enable_lottery) ? 'checked' : '' }}>
                                 Aktifkan Undian Hadiah
                             </label>
-                        </div>
+                        </div> -->
 
                         <div class="form-group">
                             <label class="form-checkbox">
@@ -280,6 +280,11 @@
     }
 
     /* Unified Input Styling */
+    select.form-input option {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+
     .form-input, 
     select.form-input {
         width: 100%;
@@ -330,20 +335,7 @@
         border-color: var(--danger);
     }
 
-    /* Dark mode specific override */
-    @media (prefers-color-scheme: dark) {
-        .form-input,
-        select.form-input {
-            background-color: #1e293b;
-            border-color: #334155;
-            color: #f8fafc;
-        }
-        
-        select.form-input option {
-            background-color: #1e293b;
-            color: #f8fafc;
-        }
-    }
+
 
     .form-hint {
         display: block;

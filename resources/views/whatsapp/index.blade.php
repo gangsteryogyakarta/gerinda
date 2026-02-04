@@ -95,6 +95,9 @@
                     <button class="tab-btn" data-tab="event">
                         <i data-lucide="calendar"></i> Event
                     </button>
+                    <button class="tab-btn" data-tab="templates">
+                        <i data-lucide="file-text"></i> Template
+                    </button>
                 </div>
             </div>
             <div class="card-body">
@@ -112,11 +115,7 @@
                             <div class="char-counter"><span id="single-char-count">0</span>/4096</div>
                         </div>
                          <!-- Add Image Upload for Single Message -->
-                         <div class="form-group">
-                            <label class="form-label">Lampirkan Gambar (Optional)</label>
-                            <input type="text" id="single-image-url" class="form-input" placeholder="https://example.com/image.jpg">
-                            <div class="form-hint">Masukkan URL gambar yang valid</div>
-                        </div>
+
 
                         <div class="form-action right">
                             <button type="submit" class="btn btn-primary" id="btn-send-single">
@@ -198,10 +197,7 @@
                             <div class="char-counter"><span id="bulk-char-count">0</span>/4096</div>
                         </div>
                         
-                         <div class="form-group">
-                            <label class="form-label">Lampirkan Gambar URL (Optional)</label>
-                            <input type="text" id="bulk-image-url" class="form-input" placeholder="https://...">
-                        </div>
+
 
                         <div class="form-action right">
                             <button type="submit" class="btn btn-primary" id="btn-send-bulk">
@@ -245,6 +241,91 @@
                             </button>
                         </div>
                     </form>
+                </div>
+
+                <!-- Template Builder -->
+                <div class="tab-content" id="tab-templates">
+                    <div class="template-builder-container">
+                        <!-- Top Row: Variables + Editor -->
+                        <div class="template-builder-top">
+                            <!-- Left: Variables Panel -->
+                            <div class="variables-panel">
+                                <h4><i data-lucide="code"></i> Variabel</h4>
+                                <div id="variables-list" class="variables-list">
+                                    <!-- Loaded via JS -->
+                                </div>
+                                <div class="condition-hint">
+                                    <small><i data-lucide="info"></i> Klik untuk insert</small>
+                                </div>
+                            </div>
+
+                            <!-- Right: Editor -->
+                            <div class="editor-panel">
+                                <div class="editor-header">
+                                    <div class="form-group" style="margin-bottom: 8px;">
+                                        <input type="text" id="template-name" class="form-input" placeholder="Nama Template" required>
+                                    </div>
+                                    <div class="editor-meta">
+                                        <select id="template-category" class="form-input" style="width: auto;">
+                                            <option value="umum">Pesan Umum</option>
+                                            <option value="promosi">Promosi & Undangan</option>
+                                            <option value="event">Notifikasi Event</option>
+                                            <option value="birthday">Ucapan Ulang Tahun</option>
+                                            <option value="survey">Survey & Feedback</option>
+                                            <option value="transaksi">Konfirmasi Transaksi</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <textarea id="template-content" class="form-input template-textarea" rows="8" placeholder="Tulis template pesan di sini...
+
+Gunakan {nama} untuk nama penerima
+Gunakan {if:kategori=Pengurus}...{endif} untuk kondisi"></textarea>
+                                <div class="editor-footer">
+                                    <span class="char-counter"><span id="template-char-count">0</span>/4096</span>
+                                    <div class="editor-actions">
+                                        <button type="button" class="btn btn-sm btn-secondary" onclick="loadExistingTemplates()">
+                                            <i data-lucide="folder-open"></i> Muat Template
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-primary" onclick="saveTemplate()">
+                                            <i data-lucide="save"></i> Simpan
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Row: Preview -->
+                        <div class="preview-panel preview-panel-bottom">
+                            <div class="preview-header">
+                                <h4><i data-lucide="eye"></i> Preview Pesan</h4>
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <small>Sample: <span id="sample-name">Budi Santoso</span></small>
+                                    <button type="button" class="btn-icon-sm" onclick="refreshPreview()" title="Refresh">
+                                        <i data-lucide="refresh-cw"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="template-preview" class="preview-content">
+                                <div class="preview-placeholder">
+                                    <i data-lucide="message-circle"></i>
+                                    <p>Preview akan muncul di sini setelah Anda menulis template</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Existing Templates Library -->
+                    <div class="templates-library" style="margin-top: 16px;">
+                        <div class="library-header" onclick="toggleTemplatesLibrary()">
+                            <span><i data-lucide="library"></i> Template Library</span>
+                            <i data-lucide="chevron-down" id="library-icon"></i>
+                        </div>
+                        <div id="templates-library-body" class="library-body" style="display: none;">
+                            <div id="templates-grid" class="templates-grid">
+                                <!-- Loaded via JS -->
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -307,48 +388,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Templates Card -->
-            <div class="card mt-4">
-                 <div class="card-header">
-                    <h3 class="card-title">
-                        <div class="card-title-icon"><i data-lucide="layout-template"></i></div>
-                        Template Cepat
-                    </h3>
-                </div>
-                <div class="card-body p-2">
-                    <div class="template-list">
-                        <button class="template-item" onclick="useTemplate('event-reminder')">
-                            <div class="tpl-icon"><i data-lucide="calendar"></i></div>
-                            <div class="tpl-info">
-                                <span>Reminder Event</span>
-                                <small>H-1 Acara</small>
-                            </div>
-                        </button>
-                        <button class="template-item" onclick="useTemplate('ticket-confirm')">
-                            <div class="tpl-icon"><i data-lucide="ticket"></i></div>
-                            <div class="tpl-info">
-                                <span>Konfirmasi Tiket</span>
-                                <small>Info Registrasi</small>
-                            </div>
-                        </button>
-                        <button class="template-item" onclick="useTemplate('thank-you')">
-                            <div class="tpl-icon"><i data-lucide="heart"></i></div>
-                             <div class="tpl-info">
-                                <span>Ucapan Terima Kasih</span>
-                                <small>Pasca Event</small>
-                            </div>
-                        </button>
-                         <button class="template-item" onclick="useTemplate('general-blast')">
-                            <div class="tpl-icon"><i data-lucide="megaphone"></i></div>
-                             <div class="tpl-info">
-                                <span>Info Umum</span>
-                                <small>Broadcast Anggota</small>
-                            </div>
-                        </button>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -366,6 +405,8 @@
         grid-template-columns: 1fr 340px;
         gap: 24px;
     }
+
+
 
     /* Custom Card Styles for WA Page to match Premium Theme */
     .composer-card {
@@ -591,27 +632,29 @@
         align-items: center;
         gap: 8px;
         padding: 6px 16px;
-        background: white;
+        background: #facc15; /* Yellow */
         border-radius: 8px;
         font-size: 13px;
-        font-weight: 600;
-        color: var(--text-primary);
+        font-weight: 700;
+        color: #000000; /* Black text */
         box-shadow: var(--shadow-sm);
         text-decoration: none;
         transition: all 0.2s;
-        border: 1px solid var(--border-color);
+        border: none;
         margin-right: 12px;
     }
 
     .btn-analytics:hover {
-        background: var(--bg-input);
-        color: var(--primary);
-        border-color: var(--primary);
+        background: #eab308; /* Darker yellow */
+        color: #000000;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 
     .btn-analytics i {
         width: 16px;
         height: 16px;
+        stroke-width: 2.5px;
     }
 
     /* Advanced Filters */
@@ -652,292 +695,327 @@
         color: var(--info);
     }
 
+    /* Button Spinner for Loading States */
+    .btn-spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255,255,255,0.3);
+        border-top-color: #fff;
+        border-radius: 50%;
+        animation: spin 0.8s infinite linear;
+        vertical-align: middle;
+        margin-right: 6px;
+    }
+
+    /* ========== TEMPLATE BUILDER STYLES ========== */
+    .template-builder-container {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-height: 400px;
+    }
+
+    .template-builder-top {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 16px;
+    }
+
+    /* Variables Panel */
+    .variables-panel {
+        background: var(--bg-input);
+        border-radius: var(--radius);
+        padding: 12px;
+        overflow-y: auto;
+        max-height: 350px;
+    }
+
+    .variables-panel h4 {
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-secondary);
+    }
+
+    .variables-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .var-group-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-top: 8px;
+        letter-spacing: 0.5px;
+    }
+
+    .var-chip {
+        display: inline-block;
+        padding: 4px 8px;
+        background: var(--primary-light);
+        color: var(--primary);
+        border-radius: 4px;
+        font-size: 11px;
+        font-family: monospace;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        text-align: left;
+    }
+
+    .var-chip:hover {
+        background: var(--primary);
+        color: white;
+        transform: scale(1.02);
+    }
+
+    .condition-hint {
+        margin-top: 16px;
+        padding-top: 12px;
+        border-top: 1px solid var(--border-light);
+    }
+
+    .condition-hint small {
+        color: var(--text-muted);
+        font-size: 11px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* Editor Panel */
+    .editor-panel {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .editor-header {
+        margin-bottom: 8px;
+    }
+
+    .editor-meta {
+        display: flex;
+        gap: 8px;
+    }
+
+    .template-textarea {
+        flex: 1;
+        font-family: 'Consolas', 'Monaco', monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        resize: none;
+        min-height: 300px;
+    }
+
+    .editor-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 8px;
+    }
+
+    .editor-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    /* Preview Panel */
+    .preview-panel {
+        background: var(--bg-input);
+        border-radius: var(--radius);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .preview-panel-bottom {
+        flex-direction: row;
+        min-height: 120px;
+        max-height: 150px;
+    }
+
+    .preview-panel-bottom .preview-header {
+        writing-mode: horizontal-tb;
+        flex-shrink: 0;
+        border-bottom: none;
+        border-right: 1px solid var(--border-light);
+        padding: 12px 16px;
+        flex-direction: column;
+        gap: 8px;
+        min-width: 180px;
+    }
+
+    .preview-panel-bottom .preview-content {
+        flex: 1;
+        min-height: 100px;
+    }
+
+    .preview-header {
+        padding: 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .preview-header h4 {
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    .preview-content {
+        flex: 1;
+        padding: 12px;
+        overflow-y: auto;
+        background: #1a1a1a;
+        font-size: 13px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        color: #e0e0e0;
+    }
+
+    .preview-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-muted);
+        text-align: center;
+    }
+
+    .preview-placeholder i {
+        width: 32px;
+        height: 32px;
+        margin-bottom: 8px;
+        opacity: 0.5;
+    }
+
+    .preview-sample {
+        padding: 8px 12px;
+        background: rgba(0,0,0,0.2);
+        border-top: 1px solid var(--border-light);
+    }
+
+    .preview-sample small {
+        color: var(--text-muted);
+    }
+
+    /* Templates Library */
+    .templates-library {
+        background: var(--bg-input);
+        border-radius: var(--radius);
+        overflow: hidden;
+    }
+
+    .library-header {
+        padding: 12px 16px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
+
+    .library-header:hover {
+        background: rgba(255,255,255,0.05);
+    }
+
+    .library-body {
+        padding: 16px;
+        border-top: 1px solid var(--border-light);
+    }
+
+    .templates-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 12px;
+    }
+
+    .template-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius);
+        padding: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .template-card:hover {
+        border-color: var(--primary);
+        transform: translateY(-2px);
+    }
+
+    .template-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 8px;
+    }
+
+    .template-card-title {
+        font-weight: 600;
+        font-size: 13px;
+        color: var(--text-primary);
+    }
+
+    .template-card-category {
+        font-size: 10px;
+        padding: 2px 6px;
+        background: var(--primary-light);
+        color: var(--primary);
+        border-radius: 4px;
+    }
+
+    .template-card-preview {
+        font-size: 11px;
+        color: var(--text-muted);
+        line-height: 1.4;
+        max-height: 60px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .template-card-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 8px;
+    }
+
     /* Responsive */
     @media (max-width: 1024px) {
         .wa-grid { grid-template-columns: 1fr; }
-        .side-col { order: -1; } /* On mobile, status on top? Or keep bottom? Let's keep bottom or side */
+        .side-col { order: -1; }
+        .template-builder-container {
+            grid-template-columns: 1fr;
+        }
+        .variables-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            max-height: none;
+        }
+        .variables-panel h4 { width: 100%; }
+        .variables-list { flex-direction: row; flex-wrap: wrap; }
+        .preview-panel { min-height: 200px; }
     }
 </style>
 @endpush
 
 @push('scripts')
-<script>
-    // Templates
-    const textTemplates = {
-        'event-reminder': `Halo Kader Gerindra! 🇮🇩\n\nJangan lupa hadir di acara:\n📅 {nama_event}\n📍 {lokasi}\n\nPastikan membawa KTP dan tiket.\n\nSalam Perjuangan! ✊`,
-        'ticket-confirm': `Selamat! 🎉\nRegistrasi Anda terkonfirmasi:\n📌 Event: {nama_event}\n🎫 Tiket: {no_tiket}\n\nTunjukkan pesan ini saat registrasi.\nDPD Gerindra DIY`,
-        'thank-you': `Terima kasih atas kehadiran Anda di {nama_event}! 🙏\nKawal terus perjuangan Partai Gerindra.\n\nSalam Indonesia Raya!`,
-        'general-blast': `Salam Perjuangan! 🇮🇩\n\nKepada Yth. Kader Gerindra,\n\n{isi_pesan}\n\nTerima kasih.\nDPD Gerindra DIY`
-    };
-
-    let qrInterval;
-    let statusInterval;
-
-    document.addEventListener('DOMContentLoaded', () => {
-        setupTabs();
-        setupCharCounters();
-        setupAdvancedFilter();
-        loadResources();
-        
-        // Initial check
-        checkHealth();
-        // Poll every 5s
-        statusInterval = setInterval(checkHealth, 5000);
-        
-        setupForms();
-    });
-
-    function setupTabs() {
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Remove active classes
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
-                // Add active
-                btn.classList.add('active');
-                document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-            });
-        });
-    }
-
-    function setupCharCounters() {
-        ['single', 'bulk', 'event'].forEach(id => {
-            const el = document.getElementById(id + '-message');
-            const cnt = document.getElementById(id + '-char-count');
-            if(el && cnt) {
-                el.addEventListener('input', () => cnt.innerText = el.value.length);
-            }
-        });
-    }
-
-    function setupAdvancedFilter() {
-        // Toggle logic if needed, already inline in HTML via onclick
-        document.getElementById('bulk-filter').addEventListener('change', function() {
-            const isProvince = this.value === 'province';
-            document.getElementById('province-select-container').style.display = isProvince ? 'block' : 'none';
-        });
-    }
-    
-    function toggleAdvanced() {
-        const body = document.getElementById('advanced-body');
-        const icon = document.getElementById('advanced-icon');
-        if (body.style.display === 'none') {
-            body.style.display = 'block';
-            icon.style.transform = 'rotate(180deg)';
-        } else {
-            body.style.display = 'none';
-            icon.style.transform = 'rotate(0deg)';
-        }
-    }
-
-    function loadResources() {
-        // Load Provinces
-        fetch('/api/v1/locations/provinces')
-            .then(r => r.json())
-            .then(data => {
-                const select = document.getElementById('bulk-province');
-                (data.data || data).forEach(p => select.innerHTML += `<option value="${p.id}">${p.name}</option>`);
-            });
-
-        // Load Events
-        fetch('/api/v1/events')
-            .then(r => r.json())
-            .then(data => {
-                const select = document.getElementById('event-select');
-                (data.data || data).forEach(e => select.innerHTML += `<option value="${e.id}">${e.name}</option>`);
-            });
-            
-        // Load Regencies for DIY (ID 34)
-         fetch('/api/v1/locations/regencies?province_id=34')
-            .then(r => r.json())
-            .then(data => {
-                const select = document.getElementById('bulk-regency');
-                (data.data || data).forEach(r => select.innerHTML += `<option value="${r.id}">${r.name}</option>`);
-            });
-    }
-
-    function useTemplate(key) {
-        const tmpl = textTemplates[key];
-        // Find visible textarea
-        const activeTab = document.querySelector('.tab-content.active');
-        const textarea = activeTab.querySelector('textarea');
-        if(textarea && tmpl) {
-            textarea.value = tmpl;
-            textarea.dispatchEvent(new Event('input')); // Update counter
-        }
-    }
-
-    // --- WhatsApp Logic ---
-    function checkHealth() {
-        fetch('/whatsapp/health')
-            .then(r => r.json())
-            .then(updateStatus)
-            .catch(() => updateStatus({ connected: false, status: 'offline' }));
-    }
-
-    function updateStatus(data) {
-        const loading = document.getElementById('session-loading');
-        const start = document.getElementById('start-container');
-        const qr = document.getElementById('qr-container');
-        const connected = document.getElementById('connected-container');
-        
-        const pillText = document.getElementById('connection-text');
-        const pill = document.getElementById('connection-status-pill');
-
-        // Hide all
-        loading.style.display = 'none';
-        start.style.display = 'none';
-        qr.style.display = 'none';
-        connected.style.display = 'none';
-
-        const status = data.status || {};
-        const state = status.status || 'disconnected';
-        const isConnected = status.connected || false;
-
-        if (isConnected) {
-            connected.style.display = 'flex';
-            document.getElementById('connected-detail').innerText = 'Terhubung: ' + (status.user?.id?.split(':')[0] || 'Unknown');
-            document.getElementById('connected-phone-stat').innerText = status.user?.id?.split(':')[0] || 'Online';
-            
-            pill.className = 'connection-pill connected';
-            pillText.innerText = 'Terhubung';
-            
-            if (qrInterval) clearInterval(qrInterval);
-        } else if (state === 'qr' || state === 'scan_qr_code') {
-            qr.style.display = 'flex';
-            pill.className = 'connection-pill disconnected';
-            pillText.innerText = 'Scan QR';
-            
-            // Auto refresh logic handled by interval or manual button
-             refreshQR();
-        } else {
-            start.style.display = 'flex';
-            pill.className = 'connection-pill disconnected';
-            pillText.innerText = 'Terputus';
-        }
-    }
-
-    function startSession() {
-        const btn = document.getElementById('btn-start-session');
-        const original = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = 'Memulai...';
-
-        fetch('/whatsapp/session/start', {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-        })
-        .then(r => r.json())
-        .then(() => {
-            checkHealth();
-            // Start QR polling
-             if (!qrInterval) qrInterval = setInterval(refreshQR, 4000);
-        })
-        .finally(() => {
-            btn.disabled = false;
-            btn.innerHTML = original;
-        });
-    }
-
-    function refreshQR() {
-        fetch('/whatsapp/qr')
-            .then(r => r.json())
-            .then(data => {
-                if(data.success && data.qr) {
-                     document.getElementById('qr-image').src = data.qr;
-                }
-            });
-    }
-    
-    function logout() {
-        if(!confirm('Putuskan koneksi WhatsApp?')) return;
-        fetch('/whatsapp/logout', {
-             method: 'POST',
-            headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-        }).then(checkHealth);
-    }
-    
-    function setupForms() {
-        // Generic form submit handler
-        const handle = (formId, url, btnId, payloadFn) => {
-            const form = document.getElementById(formId);
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                if(!confirm('Kirim pesan ini?')) return;
-                
-                const btn = document.getElementById(btnId);
-                const original = btn.innerHTML;
-                btn.disabled = true;
-                btn.innerHTML = 'Mengirim...';
-                
-                const payload = payloadFn();
-                
-                // Add Image URL if exists in form
-                const imgInput = form.querySelector('input[placeholder*="image"]');
-                if(imgInput && imgInput.value) {
-                     // Check if backend supports mixed text+image or separate endpoints.
-                     // For now, assuming standard text endpoint might not handle it, 
-                     // but we updated the service to handle context. 
-                     // Ideally we should use separate endpoint or update the controller to handle optional image_url
-                     // Let's pass it in payload
-                     payload.image_url = imgInput.value;
-                }
-
-                // Determine URL based on payload or default
-                let targetUrl = url;
-                if(formId === 'event-message-form') {
-                    // For event, we use a specific route format: /whatsapp/event/{id}/notify
-                    targetUrl = `/whatsapp/event/${payload.event_id || document.getElementById('event-select').value}/notify`;
-                }
-
-                fetch(targetUrl, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify(payload)
-                })
-                .then(r => r.json())
-                .then(d => {
-                    if(d.success) {
-                        alert('Berhasil: ' + (d.message || 'Pesan dikirim/antre.'));
-                        form.reset();
-                    } else {
-                        alert('Gagal: ' + (d.error || d.message));
-                    }
-                })
-                .catch(e => alert('Error: ' + e))
-                .finally(() => {
-                    btn.disabled = false;
-                    btn.innerHTML = original;
-                });
-            });
-        };
-
-        handle('single-message-form', '/whatsapp/send', 'btn-send-single', () => ({
-            phone: document.getElementById('single-phone').value,
-            message: document.getElementById('single-message').value
-        }));
-
-        handle('bulk-message-form', '/whatsapp/blast', 'btn-send-bulk', () => ({
-            filter: document.getElementById('bulk-filter').value,
-            province_id: document.getElementById('bulk-province').value,
-             regency_id: document.getElementById('bulk-regency').value,
-             gender: document.getElementById('bulk-gender').value,
-             age_min: document.getElementById('bulk-age-min').value,
-            age_max: document.getElementById('bulk-age-max').value,
-            limit: document.getElementById('bulk-limit').value,
-            message: document.getElementById('bulk-message').value
-        }));
-        
-        handle('event-message-form', '', 'btn-send-event', () => ({
-             status: document.getElementById('event-status').value,
-             message: document.getElementById('event-message').value
-             // event_id injected in url construction
-        }));
-    }
-</script>
+<script src="{{ asset('js/whatsapp-page.js') }}?v=4.1"></script>
 @endpush
 @endsection
