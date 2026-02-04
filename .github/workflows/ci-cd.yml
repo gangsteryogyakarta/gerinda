@@ -248,7 +248,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
     environment:
       name: production
-      url: https://ems.gerindra.or.id
+      url: https://gerindradiy.com
 
     steps:
       - name: Deploy to Production Server
