@@ -282,71 +282,82 @@ class EventController extends Controller
     /**
      * Print all tickets for an event.
      */
-    public function printAllTickets(Request $request, Event $event)
+    /**
+     * Trigger background job for batch ticket generation.
+     */
+    public function generateBatchTickets(Request $request, Event $event)
     {
-        // Increase memory and time limit for large PDF generation
-        ini_set('memory_limit', '1024M');
-        set_time_limit(0);
-
-        // Base query
+        $perPage = 50; // Stable chunk size for background processing
+        
         $query = $event->registrations()
             ->whereHas('massa')
             ->whereIn('registration_status', ['confirmed', 'pending', 'waitlist'])
-            ->whereNotNull('ticket_number')
-            ->orderBy('id');
+            ->whereNotNull('ticket_number');
 
         $total = $query->count();
-        $perPage = 100; // Safe limit per PDF
+        $batches = ceil($total / $perPage);
 
-        if ($total === 0) {
-            return back()->with('error', 'Belum ada tiket yang dibuat untuk event ini. Silakan klik "Generate Tiket" terlebih dahulu.');
-        }
+        for ($i = 0; $i < $batches; $i++) {
+            $offset = $i * $perPage;
+            $start = $offset + 1;
+            $end = min(($i + 1) * $perPage, $total);
+            $batchNo = $i + 1;
 
-        // If total is large (> 150) and no batch selected, show selection screen
-        if ($total > 150 && !$request->has('batch')) {
-            $batches = ceil($total / $perPage);
-            return view('pdf.select_batch', compact('event', 'total', 'batches', 'perPage'));
-        }
+            // Check if job already exists for this batch to prevent duplicates
+            $exists = \App\Models\PrintJob::where('event_id', $event->id)
+                ->where('batch_no', $batchNo)
+                ->where('status', '!=', 'failed')
+                ->exists();
 
-        // Handle batch processing
-        if ($request->has('batch')) {
-            $batch = (int) $request->input('batch', 1);
-            $offset = ($batch - 1) * $perPage;
-            
-            $registrations = $query->skip($offset)->take($perPage)->with('massa')->get();
-            $filename = "tickets-event-{$event->code}-batch-{$batch}.pdf";
-        } else {
-            // Small amount, print all
-            $registrations = $query->with('massa')->get();
-            $filename = "tickets-event-{$event->code}.pdf";
-        }
+            if (!$exists) {
+                // Create PrintJob record
+                $printJob = \App\Models\PrintJob::create([
+                    'user_id' => auth()->id(),
+                    'event_id' => $event->id,
+                    'batch_no' => $batchNo,
+                    'ticket_range' => "{$start}-{$end}",
+                    'status' => 'pending'
+                ]);
 
-        // Prepare QR Codes and Logo
-        $qrCodes = [];
-        $logoPath = public_path('img/logo-gerindra.png');
-        $logoBase64 = '';
-        
-        if (file_exists($logoPath)) {
-            $logoData = file_get_contents($logoPath);
-            $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
-        }
-
-        foreach ($registrations as $reg) {
-            if ($reg->qr_code_path && Storage::disk('public')->exists($reg->qr_code_path)) {
-                $qrContent = Storage::disk('public')->get($reg->qr_code_path);
-                $qrCodes[$reg->id] = 'data:image/svg+xml;base64,' . base64_encode($qrContent);
+                // Dispatch Job
+                \App\Jobs\GenerateTicketPdfJob::dispatch($event, $printJob, $offset, $perPage);
             }
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.tickets_batch', [
-            'event' => $event,
-            'registrations' => $registrations,
-            'qrCodes' => $qrCodes,
-            'logoBase64' => $logoBase64,
-        ]);
-        
-        $pdf->setPaper('a4', 'portrait');
+        return redirect()->route('events.print-history', $event)
+            ->with('success', "Proses cetak {$batches} batch telah antri di background.");
+    }
 
-        return $pdf->download($filename);
+    /**
+     * Show print job history implementation.
+     */
+    public function printHistory(Event $event)
+    {
+        $jobs = \App\Models\PrintJob::where('event_id', $event->id)
+            ->orderBy('batch_no')
+            ->get();
+            
+        return view('events.print_history', compact('event', 'jobs'));
+    }
+
+    /**
+     * Print all tickets for an event (Legacy/Direct Download).
+     */
+    public function printAllTickets(Request $request, Event $event)
+    {
+        // Redirect to print history/generate page if many tickets
+        $total = $event->registrations()
+            ->whereHas('massa')
+            ->whereIn('registration_status', ['confirmed', 'pending', 'waitlist'])
+            ->whereNotNull('ticket_number')
+            ->count();
+
+        if ($total > 50) {
+            return redirect()->route('events.print-history', $event);
+        }
+
+        // ... Keep existing small-batch logic for < 50 tickets if needed, or just redirect always ...
+        return redirect()->route('events.print-history', $event);
     }
 }
+

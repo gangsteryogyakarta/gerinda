@@ -20,3 +20,11 @@
     - [x] Investigate logs (Memory exhaustion confirmed)
     - [x] Increase memory/time limits in controller
     - [x] Deploy and verify fix
+
+- [ ] Implement Scalable Background Ticket Printing
+    - [x] Design Database Schema (print_jobs table)
+    - [x] Create PrintJob Model & Migration
+    - [/] Create Background Job (GenerateTicketPdfJob)
+    - [ ] Implement Backend Controller Logic
+    - [ ] Create Frontend Dashboard (Job Status & History)
+    - [ ] Verify & Deploy

@@ -30,6 +30,10 @@
                 <i data-lucide="printer"></i>
                 Cetak Tiket
             </a>
+            <a href="{{ route('events.print-history', $event) }}" class="btn btn-secondary">
+                <i data-lucide="list"></i>
+                Print Dashboard
+            </a>
             <a href="{{ route('events.registrations', $event) }}" class="btn btn-primary">
                 <i data-lucide="eye"></i>
                 Lihat Peserta

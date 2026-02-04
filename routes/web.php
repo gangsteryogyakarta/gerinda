@@ -38,7 +38,8 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('events', EventController::class);
     Route::patch('/events/{event}/status', [EventController::class, 'updateStatus'])->name('events.update-status');
     Route::get('/events/{event}/registrations', [EventController::class, 'registrations'])->name('events.registrations');
-    Route::post('/events/{event}/batch-tickets', [EventController::class, 'batchGenerateTickets'])->name('events.batch-tickets');
+    Route::post('/events/{event}/batch-tickets', [EventController::class, 'generateBatchTickets'])->name('events.batch-tickets');
+    Route::get('/events/{event}/print-history', [EventController::class, 'printHistory'])->name('events.print-history');
     Route::get('/events/{event}/print-tickets', [EventController::class, 'printAllTickets'])->name('events.print-tickets');
 
     // Check-in
