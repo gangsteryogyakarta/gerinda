@@ -1,101 +1,111 @@
 @extends('layouts.app')
 
+@section('title', 'Print Dashboard - ' . $event->name)
+
 @section('content')
-<div class="container py-8">
-    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-bold">Riwayat Cetak Tiket: {{ $event->name }}</h2>
-            <div class="space-x-2">
-                <form action="{{ route('events.batch-tickets', $event) }}" method="POST" class="inline">
-                    @csrf
-                    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition duration-150">
-                        <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
-                        </svg>
-                        Generate Semua PDF (Background)
-                    </button>
-                </form>
-                <a href="{{ route('events.show', $event) }}" class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300 transition duration-150">
-                    Kembali
-                </a>
+    <!-- Page Header -->
+    <div class="page-header" style="flex-direction: column; align-items: flex-start; gap: 20px;">
+        <div class="page-header-left">
+            <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
+                <span class="badge badge-info" style="font-size: 14px; padding: 6px 12px;">
+                    Print Dashboard
+                </span>
+            </div>
+            <h1>Riwayat Cetak Tiket: {{ $event->name }}</h1>
+            <p>Cetak tiket dalam batch untuk menghindari timeout server</p>
+        </div>
+        <div class="page-header-right" style="width: 100%; display: flex; gap: 12px; border-top: 1px solid var(--border-light); padding-top: 20px; justify-content: flex-start;">
+            <form action="{{ route('events.batch-tickets', $event) }}" method="POST" style="display: inline;">
+                @csrf
+                <button type="submit" class="btn btn-primary">
+                    <i data-lucide="download"></i>
+                    Generate Semua PDF
+                </button>
+            </form>
+            <a href="{{ route('events.show', $event) }}" class="btn btn-secondary">
+                <i data-lucide="arrow-left"></i>
+                Kembali
+            </a>
+        </div>
+    </div>
+
+    @if(session('success'))
+        <div class="card" style="margin-bottom: 20px; background: rgba(16, 185, 129, 0.15); border-color: var(--success);">
+            <div class="card-body" style="padding: 16px 20px;">
+                <span style="color: var(--success); font-weight: 600;">✓ {{ session('success') }}</span>
             </div>
         </div>
+    @endif
 
-        @if(session('success'))
-            <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-                {{ session('success') }}
-            </div>
-        @endif
-
-        <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
-            <div class="flex">
-                <div class="flex-shrink-0">
-                    <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
-                    </svg>
-                </div>
-                <div class="ml-3">
-                    <p class="text-sm text-blue-700">
-                        Halaman ini akan otomatis diperbarui setiap 10 detik untuk mengecek status.
-                    </p>
-                </div>
-            </div>
+    <!-- Info Box -->
+    <div class="card" style="margin-bottom: 24px; background: rgba(59, 130, 246, 0.1); border-color: var(--info);">
+        <div class="card-body" style="padding: 16px 20px; display: flex; align-items: center; gap: 12px;">
+            <i data-lucide="info" style="color: var(--info); width: 20px; height: 20px;"></i>
+            <span style="color: var(--text-secondary); font-size: 14px;">
+                Halaman ini akan otomatis diperbarui setiap 10 detik untuk mengecek status job.
+            </span>
         </div>
+    </div>
 
-        <div class="overflow-x-auto">
-            <table class="min-w-full bg-white border border-gray-200">
+    <!-- Jobs Table -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <div class="card-title-icon">
+                    <i data-lucide="printer"></i>
+                </div>
+                Daftar Print Job
+            </h3>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            <table class="table">
                 <thead>
-                    <tr class="bg-gray-100 border-b">
-                        <th class="py-3 px-4 text-left font-medium text-gray-600">Batch</th>
-                        <th class="py-3 px-4 text-left font-medium text-gray-600">Range Tiket</th>
-                        <th class="py-3 px-4 text-left font-medium text-gray-600">Status</th>
-                        <th class="py-3 px-4 text-left font-medium text-gray-600">Waktu Request</th>
-                        <th class="py-3 px-4 text-right font-medium text-gray-600">Aksi</th>
+                    <tr>
+                        <th>Batch</th>
+                        <th>Range Tiket</th>
+                        <th>Status</th>
+                        <th>Waktu Request</th>
+                        <th style="text-align: right;">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-200">
+                <tbody>
                     @forelse($jobs as $job)
                         <tr>
-                            <td class="py-3 px-4">#{{ $job->batch_no }}</td>
-                            <td class="py-3 px-4">{{ $job->ticket_range }}</td>
-                            <td class="py-3 px-4">
+                            <td><strong>#{{ $job->batch_no }}</strong></td>
+                            <td>{{ $job->ticket_range }}</td>
+                            <td>
                                 @if($job->status == 'completed')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        Selesai
-                                    </span>
+                                    <span class="badge badge-success">Selesai</span>
                                 @elseif($job->status == 'failed')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800" title="{{ $job->error_message }}">
-                                        Gagal
-                                    </span>
+                                    <span class="badge badge-danger" title="{{ $job->error_message }}">Gagal</span>
                                 @elseif($job->status == 'processing')
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                        Memproses...
-                                    </span>
+                                    <span class="badge badge-warning">Memproses...</span>
                                 @else
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                        Antri
-                                    </span>
+                                    <span class="badge" style="background: rgba(255,255,255,0.1); color: var(--text-muted);">Antri</span>
                                 @endif
                             </td>
-                            <td class="py-3 px-4 text-sm text-gray-500">
+                            <td style="color: var(--text-muted);">
                                 {{ $job->created_at->diffForHumans() }}
                             </td>
-                            <td class="py-3 px-4 text-right">
+                            <td style="text-align: right;">
                                 @if($job->status == 'completed' && $job->file_path)
-                                    <a href="{{ Storage::url($job->file_path) }}" target="_blank" class="text-blue-600 hover:text-blue-900 font-medium">
-                                        Download PDF
+                                    <a href="{{ Storage::url($job->file_path) }}" target="_blank" class="btn btn-success btn-sm">
+                                        <i data-lucide="download"></i>
+                                        Download
                                     </a>
                                 @elseif($job->status == 'failed')
-                                    <span class="text-red-500 text-sm">Error</span>
+                                    <span style="color: var(--danger); font-size: 12px;">{{ Str::limit($job->error_message, 30) }}</span>
                                 @else
-                                    <span class="text-gray-400 text-sm">-</span>
+                                    <span style="color: var(--text-muted);">-</span>
                                 @endif
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="5" class="py-8 text-center text-gray-500">
-                                Belum ada riwayat cetak tiket. Klik "Generate Semua PDF" untuk memulai.
+                            <td colspan="5" style="text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                                <i data-lucide="inbox" style="width: 48px; height: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                                <p style="font-size: 16px; margin-bottom: 8px;">Belum ada riwayat cetak tiket</p>
+                                <p style="font-size: 14px;">Klik "Generate Semua PDF" untuk memulai proses cetak batch.</p>
                             </td>
                         </tr>
                     @endforelse
@@ -103,14 +113,15 @@
             </table>
         </div>
     </div>
-</div>
+@endsection
 
+@push('styles')
 <script>
-    // Auto refresh every 10 seconds if there represent pending jobs
+    // Auto refresh every 10 seconds if there are pending jobs
     @if($jobs->whereIn('status', ['pending', 'processing'])->isNotEmpty())
         setTimeout(function() {
             window.location.reload();
         }, 10000);
     @endif
 </script>
-@endsection
+@endpush

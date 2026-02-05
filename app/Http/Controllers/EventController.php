@@ -289,6 +289,22 @@ class EventController extends Controller
     {
         $perPage = 50; // Stable chunk size for background processing
         
+        // Delete existing print jobs and their PDF files for this event
+        $existingJobs = \App\Models\PrintJob::where('event_id', $event->id)->get();
+        foreach ($existingJobs as $oldJob) {
+            // Delete the PDF file if it exists
+            if ($oldJob->file_path && Storage::disk('public')->exists($oldJob->file_path)) {
+                Storage::disk('public')->delete($oldJob->file_path);
+            }
+            $oldJob->delete();
+        }
+
+        // Also clean up the entire directory for this event to be thorough
+        $eventDir = "print_jobs/{$event->id}";
+        if (Storage::disk('public')->exists($eventDir)) {
+            Storage::disk('public')->deleteDirectory($eventDir);
+        }
+
         $query = $event->registrations()
             ->whereHas('massa')
             ->whereIn('registration_status', ['confirmed', 'pending', 'waitlist'])
@@ -303,29 +319,21 @@ class EventController extends Controller
             $end = min(($i + 1) * $perPage, $total);
             $batchNo = $i + 1;
 
-            // Check if job already exists for this batch to prevent duplicates
-            $exists = \App\Models\PrintJob::where('event_id', $event->id)
-                ->where('batch_no', $batchNo)
-                ->where('status', '!=', 'failed')
-                ->exists();
+            // Create PrintJob record
+            $printJob = \App\Models\PrintJob::create([
+                'user_id' => auth()->id(),
+                'event_id' => $event->id,
+                'batch_no' => $batchNo,
+                'ticket_range' => "{$start}-{$end}",
+                'status' => 'pending'
+            ]);
 
-            if (!$exists) {
-                // Create PrintJob record
-                $printJob = \App\Models\PrintJob::create([
-                    'user_id' => auth()->id(),
-                    'event_id' => $event->id,
-                    'batch_no' => $batchNo,
-                    'ticket_range' => "{$start}-{$end}",
-                    'status' => 'pending'
-                ]);
-
-                // Dispatch Job
-                \App\Jobs\GenerateTicketPdfJob::dispatch($event, $printJob, $offset, $perPage);
-            }
+            // Dispatch Job
+            \App\Jobs\GenerateTicketPdfJob::dispatch($event, $printJob, $offset, $perPage);
         }
 
         return redirect()->route('events.print-history', $event)
-            ->with('success', "Proses cetak {$batches} batch telah antri di background.");
+            ->with('success', "Job lama dihapus. Proses cetak {$batches} batch baru telah antri di background.");
     }
 
     /**

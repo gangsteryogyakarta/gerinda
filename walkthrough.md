@@ -47,6 +47,16 @@ Berhasil melakukan deployment perbaikan untuk masalah **Timeout** saat generate 
     - Menghapus batas waktu eksekusi (`set_time_limit(0)`).
     - Verifikasi: PDF tiket sekarang bisa di-download meskipun datanya banyak.
 
+### 7. Fitur Cetak Tiket Skalabel (Background Processing)
+
+- **Fitur Baru**: Sistem antrian untuk mencetak tiket masal tanpa timeout.
+- **Komponen**:
+    - Tabel `print_jobs` untuk tracking status.
+    - Dashboard `Print History` untuk monitoring.
+    - Template PDF baru (2x2 Grid, Full A4, Header Merah).
+- **Benefit**: Bisa mencetak ribuan tiket tanpa membebani server karena diproses per batch (50 tiket) di background.
+- **Regenerate**: Tombol Generate akan otomatis menghapus file lama dan membuat ulang dengan desain terbaru.
+
 ## Hasil Verifikasi
 
 - **Deployment**: Status **SUCCESS** (Exit Code 0).
@@ -54,11 +64,6 @@ Berhasil melakukan deployment perbaikan untuk masalah **Timeout** saat generate 
 - **Server Config**: `APP_DEBUG=false` & `SESSION_DOMAIN=.gerindradiy.com`.
 - **Services**: PHP-FPM di-reload dan Supervisor queue workers telah di-restart.
 - **Print All Tickets**: Berhasil (Download PDF 550+ tiket lancar dengan limit 512MB).
+- **Background Print**: Sukses generate batch, layout 4 tiket/halaman rapi.
 
 ---
-
-> [!IMPORTANT]
-> **REKOMENDASI**: Jika Anda masih melihat Error 419, mohon lakukan **Logout** dan **Login kembali** (atau gunakan Mode Incognito) untuk membersihkan cookies lama yang tertinggal di browser Anda.
-
-render_diffs(file:///d:/laragon/www/Gerindra/app/Jobs/GenerateBatchTicketsJob.php)
-render_diffs(file:///d:/laragon/www/Gerindra/.github/workflows/ci-cd.yml)
